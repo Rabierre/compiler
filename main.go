@@ -5,33 +5,32 @@ import (
 	"io"
 )
 
-type TokenKind struct {
-	val string
-}
+type TokenType int
 
 const (
-	If       = "if"
-	For      = "for"
-	LParen   = "("
-	RParen   = ")"
-	Int      = "int"
-	Double   = "double"
-	Plus     = "+"
-	Minus    = "-"
-	Multi    = "*"
-	Divide   = "/"
-	Assign   = "="
-	Less     = "<"
-	Great    = ">"
-	LessEq   = "<="
-	GreateEq = ">="
-	Equal    = "=="
-	NotEq    = "!="
-	Space    = " "
+	IfType TokenType = iota
+	ForType
+	LParenType
+	RParenType
+	IntType
+	DoubleType
+	PlusType
+	MinusType
+	MultiType
+	DivideType
+	AssignType
+	LessType
+	GreatType
+	LessEqType
+	GreateEqType
+	EqualType
+	NotEqType
+	SpaceType
 )
 
 type Token struct {
-	kind TokenKind
+	val  string
+	kind TokenType
 }
 
 func IsSpace(ch string) bool {
@@ -61,14 +60,68 @@ func NextToken() Token {
 		}
 	case DIGIT:
 	default:
-		// TODO store
+		text += ch
 	}
+
+	// println(text)
 
 	// get token from input and
 	// check if token can be made
 	// else get next char
 
-	return Token{}
+	return Tokenize(text)
+}
+
+func Tokenize(token string) Token {
+	var kind TokenType
+	switch token {
+	case If:
+		kind = IfType
+	case For:
+		kind = ForType
+	case LParen:
+		kind = LParenType
+	case RParen:
+		kind = RParenType
+	case Int:
+		kind = IntType
+	case Double:
+		kind = DoubleType
+	case Plus:
+		kind = PlusType
+	case Minus:
+		kind = MinusType
+	case Multi:
+		kind = MultiType
+	case Divide:
+		kind = DivideType
+	case Assign:
+		kind = AssignType
+	case Less:
+		kind = LessType
+	case Great:
+		kind = GreatType
+	case LessEq:
+		kind = LessEqType
+	case GreateEq:
+		kind = GreateEqType
+	case Equal:
+		kind = EqualType
+	case NotEq:
+		kind = NotEqType
+	case Space:
+		kind = SpaceType
+	default:
+		panic("Not valid keyword:" + token)
+	}
+	return Token{token, kind}
+}
+
+var fin *bytes.Buffer
+
+func NextChar() (string, error) {
+	ch, _, err := fin.ReadRune()
+	return string(ch), err
 }
 
 type CharKind int
@@ -82,10 +135,17 @@ const (
 
 func Kind(ch string) CharKind {
 	switch ch {
-	case "a", "b", "c":
+	case "a", "b", "c", "d",
+		"e", "f", "g", "h",
+		"i", "j", "k", "l",
+		"m", "n", "o", "p",
+		"q", "r", "s", "t",
+		"u", "v", "w", "x",
+		"y", "z":
 		return LETTER
-	case "0", "1", "2", "3", "4", "5",
-		"6", "7", "8", "9":
+	case "0", "1", "2", "3",
+		"4", "5", "6", "7",
+		"8", "9":
 		return DIGIT
 	case ".":
 		return DOUBLE_QUOTE
@@ -94,19 +154,15 @@ func Kind(ch string) CharKind {
 	}
 }
 
-var fin *bytes.Buffer
-
-func NextChar() (string, error) {
-	ch, _, err := fin.ReadRune()
-	return string(ch), err
-}
-
 func main() {
 	fin = &bytes.Buffer{}
 	fin.Write([]byte("if else for + - * /"))
-
 	for fin.Len() > 0 {
 		ch, _ := NextChar()
 		println(ch)
 	}
+
+	fin.Write([]byte("if else for + - * /"))
+	token := NextToken()
+	println(token.val, token.kind == IfType)
 }
