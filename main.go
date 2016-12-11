@@ -3,46 +3,29 @@ package main
 import (
 	"bytes"
 	"io"
+
+	"fmt"
 )
 
-type TokenType int
+func Tokenizer() []Token {
+	tokens := []Token{}
+	for {
+		token, err := NextToken()
+		tokens = append(tokens, token)
+		if err != nil && err == io.EOF {
+			break
+		}
 
-const (
-	IfType TokenType = iota
-	ForType
-	LParenType
-	RParenType
-	IntType
-	DoubleType
-	PlusType
-	MinusType
-	MultiType
-	DivideType
-	AssignType
-	LessType
-	GreatType
-	LessEqType
-	GreateEqType
-	EqualType
-	NotEqType
-	SpaceType
-)
-
-type Token struct {
-	val  string
-	kind TokenType
-}
-
-func IsSpace(ch string) bool {
-	if ch == Space {
-		return true
 	}
-	return false
+	return tokens
 }
 
-func NextToken() Token {
-	// TODO skip space
+func NextToken() (Token, error) {
 	ch, err := NextChar()
+	if err != nil && err == io.EOF {
+		return Token{ch, EOFType}, err
+	}
+
 	for IsSpace(ch) {
 		ch, err = NextChar()
 		if err != nil && err != io.EOF {
@@ -59,17 +42,19 @@ func NextToken() Token {
 			ch, err = NextChar()
 		}
 	case DIGIT:
-	default:
+		// TODO
+	default: // Operator
 		text += ch
 	}
 
-	// println(text)
+	return Tokenize(text), err
+}
 
-	// get token from input and
-	// check if token can be made
-	// else get next char
-
-	return Tokenize(text)
+func IsSpace(ch string) bool {
+	if ch == Space {
+		return true
+	}
+	return false
 }
 
 func Tokenize(token string) Token {
@@ -77,6 +62,8 @@ func Tokenize(token string) Token {
 	switch token {
 	case If:
 		kind = IfType
+	case Else:
+		kind = ElseType
 	case For:
 		kind = ForType
 	case LParen:
@@ -112,7 +99,7 @@ func Tokenize(token string) Token {
 	case Space:
 		kind = SpaceType
 	default:
-		panic("Not valid keyword:" + token)
+		kind = IdentType
 	}
 	return Token{token, kind}
 }
@@ -124,28 +111,16 @@ func NextChar() (string, error) {
 	return string(ch), err
 }
 
-type CharKind int
-
-const (
-	LETTER CharKind = iota
-	DIGIT
-	DOUBLE_QUOTE
-	OTHER
-)
-
-func Kind(ch string) CharKind {
+func Kind(ch string) CharType {
 	switch ch {
-	case "a", "b", "c", "d",
-		"e", "f", "g", "h",
-		"i", "j", "k", "l",
-		"m", "n", "o", "p",
-		"q", "r", "s", "t",
-		"u", "v", "w", "x",
-		"y", "z":
+	case "a", "b", "c", "d", "e",
+		"f", "g", "h", "i", "j",
+		"k", "l", "m", "n", "o",
+		"p", "q", "r", "s", "t",
+		"u", "v", "w", "x", "y", "z":
 		return LETTER
-	case "0", "1", "2", "3",
-		"4", "5", "6", "7",
-		"8", "9":
+	case "0", "1", "2", "3", "4",
+		"5", "6", "7", "8", "9":
 		return DIGIT
 	case ".":
 		return DOUBLE_QUOTE
@@ -162,7 +137,7 @@ func main() {
 		println(ch)
 	}
 
-	fin.Write([]byte("if else for + - * /"))
-	token := NextToken()
-	println(token.val, token.kind == IfType)
+	fin.Write([]byte("if else for + - * / els"))
+	tokens := Tokenizer()
+	fmt.Println(tokens)
 }

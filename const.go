@@ -2,6 +2,7 @@ package main
 
 const (
 	If       = "if"
+	Else     = "else"
 	For      = "for"
 	LParen   = "("
 	RParen   = ")"
