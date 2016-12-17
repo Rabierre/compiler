@@ -34,6 +34,7 @@ func NextToken() (Token, error) {
 	}
 
 	text := ""
+	isNum := false
 
 	switch Kind(ch) {
 	case LETTER:
@@ -42,12 +43,25 @@ func NextToken() (Token, error) {
 			ch, err = NextChar()
 		}
 	case DIGIT:
-		// TODO
+		isNum = true
+		for ch != Space && err != io.EOF {
+			text += ch
+			if Kind(ch) == LETTER {
+				panic("Invalid variable name: " + text)
+			}
+			ch, err = NextChar()
+		}
 	default: // Operator
-		text += ch
+		for ch != Space && err != io.EOF {
+			text += ch
+			if Kind(PeepChar()) != OTHER {
+				break
+			}
+			ch, err = NextChar()
+		}
 	}
 
-	return Tokenize(text), err
+	return Tokenize(text, isNum), err
 }
 
 func IsSpace(ch string) bool {
@@ -57,8 +71,16 @@ func IsSpace(ch string) bool {
 	return false
 }
 
-func Tokenize(token string) Token {
-	var kind TokenType
+func Tokenize(token string, num bool) Token {
+	if num {
+		return Token{token, NumberType}
+	}
+
+	kind := KeywordType(token)
+	return Token{token, kind}
+}
+
+func KeywordType(token string) (kind TokenType) {
 	switch token {
 	case If:
 		kind = IfType
@@ -101,7 +123,7 @@ func Tokenize(token string) Token {
 	default:
 		kind = IdentType
 	}
-	return Token{token, kind}
+	return kind
 }
 
 var fin *bytes.Buffer
@@ -109,6 +131,12 @@ var fin *bytes.Buffer
 func NextChar() (string, error) {
 	ch, _, err := fin.ReadRune()
 	return string(ch), err
+}
+
+func PeepChar() string {
+	ch, _, _ := fin.ReadRune()
+	fin.UnreadRune()
+	return string(ch)
 }
 
 func Kind(ch string) CharType {
@@ -137,7 +165,7 @@ func main() {
 		println(ch)
 	}
 
-	fin.Write([]byte("if else for + - * / els"))
+	fin.Write([]byte("if else for + - * / els 1234 12.34 <= >="))
 	tokens := Tokenizer()
 	fmt.Println(tokens)
 }

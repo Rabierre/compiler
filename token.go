@@ -23,6 +23,7 @@ const (
 	NotEqType
 	SpaceType
 	IdentType
+	NumberType
 	EOFType
 )
 
