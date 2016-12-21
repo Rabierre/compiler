@@ -6,6 +6,7 @@ const (
 	IfType TokenType = iota
 	ElseType
 	ForType
+	FuncType
 	LParenType
 	RParenType
 	IntType

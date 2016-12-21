@@ -4,6 +4,7 @@ const (
 	If       = "if"
 	Else     = "else"
 	For      = "for"
+	Func     = "func"
 	LParen   = "("
 	RParen   = ")"
 	Int      = "int"
