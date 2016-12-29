@@ -7,8 +7,11 @@ const (
 	Func     = "func"
 	LParen   = "("
 	RParen   = ")"
+	LBrace   = "{"
+	RBrace   = "}"
 	Int      = "int"
 	Double   = "double"
+	Return   = "return"
 	Plus     = "+"
 	Minus    = "-"
 	Multi    = "*"
@@ -21,4 +24,5 @@ const (
 	Equal    = "=="
 	NotEq    = "!="
 	Space    = " "
+	CmtSlash = "//"
 )

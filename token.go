@@ -9,6 +9,8 @@ const (
 	FuncType
 	LParenType
 	RParenType
+	LBraceType
+	RBraceType
 	IntType
 	DoubleType
 	PlusType
@@ -19,66 +21,131 @@ const (
 	LessType
 	GreatType
 	LessEqType
-	GreateEqType
-	EqualType
+	GreatEqType
+	EqType
 	NotEqType
 	SpaceType
 	IdentType
-	NumberType
+	CommentType
+	ReturnType
 	EOFType
 )
 
-func KeywordType(token string) (kind TokenType) {
+func KeywordType(token string) TokenType {
 	switch token {
 	case If:
-		kind = IfType
+		return IfType
 	case Else:
-		kind = ElseType
+		return ElseType
 	case For:
-		kind = ForType
+		return ForType
 	case Func:
-		kind = FuncType
+		return FuncType
 	case LParen:
-		kind = LParenType
+		return LParenType
 	case RParen:
-		kind = RParenType
+		return RParenType
+	case LBrace:
+		return LBraceType
+	case RBrace:
+		return RBraceType
 	case Int:
-		kind = IntType
+		return IntType
 	case Double:
-		kind = DoubleType
+		return DoubleType
 	case Plus:
-		kind = PlusType
+		return PlusType
 	case Minus:
-		kind = MinusType
+		return MinusType
 	case Multi:
-		kind = MultiType
+		return MultiType
 	case Divide:
-		kind = DivideType
+		return DivideType
 	case Assign:
-		kind = AssignType
+		return AssignType
 	case Less:
-		kind = LessType
+		return LessType
 	case Great:
-		kind = GreatType
+		return GreatType
 	case LessEq:
-		kind = LessEqType
+		return LessEqType
 	case GreateEq:
-		kind = GreateEqType
+		return GreatEqType
 	case Equal:
-		kind = EqualType
+		return EqType
 	case NotEq:
-		kind = NotEqType
+		return NotEqType
 	case Space:
-		kind = SpaceType
-	default:
-		kind = IdentType
+		return SpaceType
+	case CmtSlash:
+		return CommentType
+	case Return:
+		return ReturnType
 	}
-	return kind
+	return IdentType
 }
 
 type Token struct {
 	val  string
 	kind TokenType
+}
+
+func (t TokenType) String() string {
+	switch t {
+	case IfType:
+		return "if"
+	case ElseType:
+		return "else"
+	case ForType:
+		return "for"
+	case FuncType:
+		return "func"
+	case LParenType:
+		return "lParen"
+	case RParenType:
+		return "rParen"
+	case LBraceType:
+		return "lBrace"
+	case RBraceType:
+		return "rBrace"
+	case IntType:
+		return "int"
+	case DoubleType:
+		return "double"
+	case PlusType:
+		return "plus"
+	case MinusType:
+		return "minus"
+	case MultiType:
+		return "multi"
+	case DivideType:
+		return "divide"
+	case AssignType:
+		return "assign"
+	case LessType:
+		return "less"
+	case GreatType:
+		return "greate"
+	case LessEqType:
+		return "lessEq"
+	case GreatEqType:
+		return "greatEq"
+	case EqType:
+		return "eq"
+	case NotEqType:
+		return "notEq"
+	case SpaceType:
+		return "space"
+	case IdentType:
+		return "ident"
+	case CommentType:
+		return "comment"
+	case ReturnType:
+		return "return"
+	case EOFType:
+		return "EOF"
+	}
+	return "WRONG TYPE"
 }
 
 type CharType int
@@ -87,5 +154,29 @@ const (
 	LETTER CharType = iota
 	DIGIT
 	DOUBLE_QUOTE
+	LBRACE
+	RBRACE
 	OTHER
 )
+
+func Kind(ch string) CharType {
+	switch ch {
+	case "a", "b", "c", "d", "e",
+		"f", "g", "h", "i", "j",
+		"k", "l", "m", "n", "o",
+		"p", "q", "r", "s", "t",
+		"u", "v", "w", "x", "y", "z":
+		return LETTER
+	case "0", "1", "2", "3", "4",
+		"5", "6", "7", "8", "9":
+		return DIGIT
+	case ".":
+		return DOUBLE_QUOTE
+	case "{":
+		return LBRACE
+	case "}":
+		return RBRACE
+	default:
+		return OTHER
+	}
+}
