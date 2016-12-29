@@ -3,22 +3,20 @@ BNF description for LL(>=1) grammars
 ```
 Program ::= DeclList ?
 DeclList ::= ( VarDecl | FunctionDecl ) DeclList ?
-FunctionDecl ::= Type identifier "(" ArgList ? ")" CompoundStmt
-ArgList ::= Arg ( "," ArgList ) ?
-Arg ::= Type identifier
+FunctionDecl ::= Type identifier "(" FieldList ? ")" CompoundStmt
+FieldList ::= Field ( "," FieldList ) ?
+Field ::= Type identifier
 VarDecl ::= Type IdentList
 Type ::= "int"
-       | "float"
+       | "double"
 IdentList ::= identifier ( "=" Expr ) ? ( "," IdentList ) ?
 Stmt ::= ForStmt
-       | WhileStmt
        | Expr
        | IfStmt
        | CompoundStmt
        | "return" Expr ?
-ForStmt ::= "for" "(" Expr ";" OptExpr ";" OptExpr ")" CompoundStmt
+ForStmt ::= "for" "(" OptExpr ";" OptExpr ";" OptExpr ")" CompoundStmt
 OptExpr ::= Expr ?
-WhileStmt ::= "while" "(" Expr ")" CompoundStmt
 IfStmt ::= "if" "(" Expr ")" CompoundStmt ElsePart
 ElsePart ::= ( "else" CompoundStmt ) ?
 CompoundStmt ::= "{" VarDeclList ? StmtList ? "}"
@@ -46,4 +44,8 @@ Factor ::= "(" Expr ")"
          | number
          | string
 ExprList ::= Expr ( "," ExprList ) ?
+Comment ::= "//" Text
+Text ::= a-z
+         | A-Z
+         | 0-9
 ```
