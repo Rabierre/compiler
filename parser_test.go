@@ -6,9 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func initParser(src string) *Parser {
+	parser := &Parser{}
+	parser.Init([]byte(src))
+	return parser
+}
+
 func TestParseComment(t *testing.T) {
-	parser := Parser{}
-	parser.Init([]byte("// this is comment"))
+	parser := initParser("// this is comment")
 	parser.Parse()
 
 	assert.NotNil(t, parser.topScope)
@@ -16,12 +21,13 @@ func TestParseComment(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	parser := Parser{}
-	parser.Init([]byte(`func func1() {}
+	src := `func func1() {}
         // Comment Here
         func func2() {
+
         }
-        `))
+    `
+	parser := initParser(src)
 	parser.Parse()
 
 	assert.NotNil(t, parser.topScope)
@@ -34,5 +40,12 @@ func TestParseFunction(t *testing.T) {
 }
 
 func TestParseFor(t *testing.T) {
-	// initScanner("for (;;) {}")
+	src := `for (;;) {
+
+        }
+    `
+	parser := initParser(src)
+	stmt := parser.parseStmt()
+	assert.NotNil(t, stmt)
+	assert.NotNil(t, stmt.(*ForStmt).Cond)
 }

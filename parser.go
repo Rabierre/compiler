@@ -25,114 +25,40 @@ func (p *Parser) Init(src []byte) {
 	p.OpenScope() // Top scope
 }
 
-func (p *Parser) next() (Token, int) {
-	tok, _ := p.scanner.peek()
-	if tok.kind == CommentType {
-		// Consume comment list
-		p.scanner.next()
-		p.parseComment()
-	}
-	return p.scanner.next()
-}
-
 func (p *Parser) Parse() {
 	p.OpenScope()
 
-	for {
-		token, _ := p.next()
-
-		// println("Parsed token: ", token.kind.String())
+	for !p.scanner.fullScaned {
+		token, _ := p.scanner.peek()
+		println("parse: ", token.val, token.kind.String())
 		switch token.kind {
 		case CommentType:
+			// TODO move to scanner
 			p.parseComment()
-		// TODO seperate comment consume and decl parse
-		case FuncType:
-			p.parseFunc()
-		}
-		if p.scanner.fullScaned {
-			break
+		default:
+			p.parseDecl()
 		}
 	}
 
 	p.CloseScope()
 }
 
-func (p *Parser) OpenScope() {
-	p.topScope = &Scope{p.topScope, []*Object{}}
-}
-
-func (p *Parser) CloseScope() {
-	p.topScope = p.topScope.outer
-}
-
-func (p *Parser) parseComment() {
-	// '//' already consumed
-	token := p.scanner.nextLine() // TODO get line not token
-	println("Parse Comment: ", token.val)
-
-	// TODO Use integer position in source code not token index
-	comment := &Comment{p.scanner.srcIndex, token.val}
-	p.comments.Insert(comment)
-
-	if debug {
-		println("Trace: ")
-		for _, cmt := range p.comments.comments {
-			fmt.Println(cmt)
-		}
+func (p *Parser) parseDecl() {
+	tok, _ := p.scanner.next()
+	println("parse decl: ", tok.val, tok.kind.String())
+	switch tok.kind {
+	case FuncType:
+		p.parseFunc()
 	}
 }
-
-type Ident struct {
-	Pos  int
-	Name string
-}
-
-type Field struct {
-}
-
-type ArgList struct {
-	fields []*Field
-}
-
-type Stmt interface {
-	// IfStmt
-	// ForStmt
-	// Expr
-	// CompoundStmt
-	// "return" Expr ?
-	stmtNode()
-}
-
-type CompoundStmt struct {
-	LBracePos int
-	RBracePos int
-	List      []Stmt
-}
-
-type EmptyStmt struct {
-}
-
-type BadStmt struct {
-	From int
-}
-
-func (*CompoundStmt) stmtNode() {}
-func (*EmptyStmt) stmtNode()    {}
-func (*BadStmt) stmtNode()      {}
-
-type FuncDecl struct {
-	Name   Ident
-	Body   *CompoundStmt // body or nil
-	Params *ArgList      // list of parameters
-}
-
-func (*FuncDecl) declNode() {}
 
 func (p *Parser) parseFunc() {
 	// 1. get function name
 	ident := p.parseIdent()
 	// 2. get parameters
+	p.expect(LParenType)
 	// TODO
+	p.expect(RParenType)
 	// 3. parse body
 	body := p.parseBody() // parse compound statement
 	// 4. make funcDecl
@@ -159,7 +85,6 @@ func (p *Parser) parseIdent() Ident {
 func (p *Parser) parseBody() *CompoundStmt {
 	lbrace := p.expect(LBraceType)
 	// TODO open scope
-	println("parseBody")
 	list := p.parseStmtList()
 	// TODO close scope
 	rbrace := p.expect(RBraceType)
@@ -174,7 +99,6 @@ func (p *Parser) parseBody() *CompoundStmt {
 func (p *Parser) parseCompoundStmt() *CompoundStmt {
 	lbrace := p.expect(LBraceType)
 	// TODO open scope
-	println("parseBody")
 	list := p.parseStmtList()
 	// TODO close scope
 	rbrace := p.expect(RBraceType)
@@ -183,14 +107,6 @@ func (p *Parser) parseCompoundStmt() *CompoundStmt {
 		RBracePos: rbrace,
 		List:      list,
 	}
-}
-
-func (p *Parser) expect(expected TokenType) int {
-	tok, pos := p.next()
-	if tok.kind != expected {
-		panic("Expected: " + expected.String() + ", found: " + tok.val + " " + tok.kind.String())
-	}
-	return pos
 }
 
 func (p *Parser) parseStmtList() []Stmt {
@@ -207,13 +123,13 @@ func (p *Parser) parseStmtList() []Stmt {
 
 func (p *Parser) parseStmt() Stmt {
 	token, pos := p.scanner.peek()
-	println("parseStmt: ", token.val)
+	fmt.Printf("parseStmt: %s, %s\n", token.val, token.kind.String())
 
 	switch token.kind {
 	case IntType, DoubleType:
 		// expression
 	case ForType:
-		// ForStmt
+		return p.parseForStmt()
 	case IfType:
 		// IfStmt
 	case ReturnType:
@@ -222,14 +138,131 @@ func (p *Parser) parseStmt() Stmt {
 		return p.parseCompoundStmt()
 	case RBraceType:
 		return &EmptyStmt{ /*position for semicolon if need*/ }
+	default:
+		p.next()
 	}
 	// No statement? error
 	return &BadStmt{From: pos}
 }
 
-// TODO parse decl(function, const ..) here
-func (p *Parser) parseDecl() {
+func (p *Parser) parseForStmt() Stmt {
+	_, pos := p.next()
+	// 1. get initial status
+	p.expect(LParenType)
+	init := &EmptyStmt{}
+	p.expect(SemiColType)
+	// 2. get condition
+	cond := &EmptyStmt{}
+	p.expect(SemiColType)
+	// 3. get post stmt
+	post := &EmptyStmt{}
+	p.expect(RParenType)
+	// 4. parse body
+	body := p.parseBody() // parse compound statement
+	// 5. make forDecl
+	return &ForStmt{Pos: pos, Cond: cond, Init: init, Post: post, Body: body}
 }
+
+func (p *Parser) next() (Token, int) {
+	tok, pos := p.scanner.next()
+	if tok.kind == CommentType {
+		p.scanner.nextLine()
+		tok, pos = p.scanner.next()
+	}
+	return tok, pos
+}
+
+func (p *Parser) expect(expected TokenType) int {
+	tok, pos := p.next()
+	if tok.kind != expected {
+		panic("Expected: " + expected.String() + ", found: " + tok.val + " " + tok.kind.String())
+	}
+	return pos
+}
+
+func (p *Parser) OpenScope() {
+	p.topScope = &Scope{p.topScope, []*Object{}}
+}
+
+func (p *Parser) CloseScope() {
+	p.topScope = p.topScope.outer
+}
+
+// TODO move to scanner
+func (p *Parser) parseComment() {
+	println("parsecomment")
+	token, pos := p.scanner.nextLine()
+
+	// TODO Use integer position in source code not token index
+	comment := &Comment{pos, token.val}
+	p.comments.Insert(comment)
+
+	if debug {
+		println("Trace: ")
+		for _, cmt := range p.comments.comments {
+			fmt.Println(cmt)
+		}
+	}
+}
+
+type Ident struct {
+	Pos  int
+	Name string
+}
+
+type Field struct {
+}
+
+type ArgList struct {
+	fields []*Field
+}
+
+type Decl interface {
+	declNode()
+}
+
+type FuncDecl struct {
+	Name   Ident
+	Body   *CompoundStmt // body or nil
+	Params *ArgList      // list of parameters
+}
+
+func (*FuncDecl) declNode() {}
+
+type CompoundStmt struct {
+	LBracePos int
+	RBracePos int
+	List      []Stmt
+}
+
+type Stmt interface {
+	// IfStmt
+	// ForStmt
+	// Expr
+	// CompoundStmt
+	// "return" Expr ?
+	stmtNode()
+}
+
+type ForStmt struct {
+	Pos  int
+	Init Stmt
+	Cond Stmt // TODO expr
+	Post Stmt
+	Body *CompoundStmt
+}
+
+type EmptyStmt struct {
+}
+
+type BadStmt struct {
+	From int
+}
+
+func (*CompoundStmt) stmtNode() {}
+func (*ForStmt) stmtNode()      {}
+func (*EmptyStmt) stmtNode()    {}
+func (*BadStmt) stmtNode()      {}
 
 // ------------------------------------------------------------------
 // TODO go somewhere
@@ -244,10 +277,6 @@ func (c *CommentList) Insert(comment *Comment) {
 type Comment struct {
 	pos  int // TODO position of comment slash' in source code
 	text string
-}
-
-type Decl interface {
-	declNode()
 }
 
 type Scope struct {
