@@ -73,12 +73,6 @@ func (p *Parser) parseIdent() Ident {
 		panic("Not function identifier: " + tok.val + " " + tok.kind.String())
 	}
 
-	for i := 0; i < len(tok.val); i++ {
-		if rune(tok.val[i]) == '(' {
-			tok.val = tok.val[:i]
-		}
-	}
-
 	return Ident{Name: tok.val, Pos: pos}
 }
 
@@ -112,7 +106,8 @@ func (p *Parser) parseCompoundStmt() *CompoundStmt {
 func (p *Parser) parseStmtList() []Stmt {
 	list := []Stmt{}
 	for {
-		token, _ := p.scanner.peek()
+		token, _ := p.peek()
+		println("parseStmtList: ", token.val, token.kind.String())
 		if token.kind == RBraceType || token.kind == EOFType {
 			break
 		}
@@ -122,7 +117,7 @@ func (p *Parser) parseStmtList() []Stmt {
 }
 
 func (p *Parser) parseStmt() Stmt {
-	token, pos := p.scanner.peek()
+	token, pos := p.peek()
 	fmt.Printf("parseStmt: %s, %s\n", token.val, token.kind.String())
 
 	switch token.kind {
@@ -164,12 +159,21 @@ func (p *Parser) parseForStmt() Stmt {
 }
 
 func (p *Parser) next() (Token, int) {
-	tok, pos := p.scanner.next()
+	tok, _ := p.scanner.peek()
+	// TODO skip all comment
 	if tok.kind == CommentType {
 		p.scanner.nextLine()
-		tok, pos = p.scanner.next()
 	}
-	return tok, pos
+	return p.scanner.next()
+}
+
+func (p *Parser) peek() (Token, int) {
+	tok, _ := p.scanner.peek()
+	// TODO skip all comment
+	if tok.kind == CommentType {
+		p.scanner.nextLine()
+	}
+	return p.scanner.peek()
 }
 
 func (p *Parser) expect(expected TokenType) int {
