@@ -1,39 +1,55 @@
 package main
 
-import "io"
+import (
+	"io"
+	"strings"
+)
 
 type Scanner struct {
 	src        []byte
 	srcIndex   int
 	tokens     []Token
 	tokenIndex int
+	fullScaned bool
 }
 
-var scanner *Scanner
-
-func init() {
-	scanner = &Scanner{tokens: []Token{}, tokenIndex: -1, srcIndex: -1}
+func (s *Scanner) Init() {
+	s.tokens = []Token{}
+	s.tokenIndex = -1
+	s.srcIndex = -1
 }
 
-func Tokenize() []Token {
+// TODO move to parser?
+func (s *Scanner) peek() (Token, int) {
+	index := s.srcIndex
+	tok, pos := s.next()
+	s.srcIndex = index
+	return tok, pos
+}
+
+// For comment
+func (s *Scanner) nextLine() Token {
+	text := ""
 	for {
-		token, err := NextToken()
-		scanner.push(token)
-		if err != nil && err == io.EOF {
+		if p, err := s.PeepCh(); err == io.EOF || p == "\n" {
 			break
 		}
+		ch, _ := s.nextCh()
+		text += ch
 	}
-	return scanner.tokens
+	return Token{text, CommentType}
 }
 
-func NextToken() (Token, error) {
-	ch, err := NextChar()
+func (s *Scanner) next() (Token, int) {
+	pos := s.srcIndex
+	ch, err := s.nextCh()
 	if err != nil && err == io.EOF {
-		return Token{ch, EOFType}, err
+		s.fullScaned = true
+		return Token{"", EOFType}, pos
 	}
 
-	for IsSpace(ch) {
-		ch, err = NextChar()
+	for IsSpace(ch) || ch == "\n" {
+		ch, err = s.nextCh()
 		if err != nil && err != io.EOF {
 			panic(err)
 		}
@@ -41,12 +57,11 @@ func NextToken() (Token, error) {
 
 	text := ""
 	isNum := false
-
 	switch Kind(ch) {
 	case LETTER:
 		for ch != Space && err != io.EOF {
 			text += ch
-			ch, err = NextChar()
+			ch, err = s.nextCh()
 		}
 	case DIGIT:
 		isNum = true
@@ -55,32 +70,62 @@ func NextToken() (Token, error) {
 			if Kind(ch) == LETTER {
 				panic("Invalid variable name: " + text)
 			}
-			ch, err = NextChar()
+			ch, err = s.nextCh()
 		}
+	case LBRACE:
+		return ToToken(ch, isNum), pos
+	case RBRACE:
+		return ToToken(ch, isNum), pos
 	default: // Operator
 		for ch != Space && err != io.EOF {
 			text += ch
-			if Kind(PeepChar()) != OTHER {
+			if p, _ := s.PeepCh(); Kind(p) != OTHER {
 				break
 			}
-			ch, err = NextChar()
+			ch, err = s.nextCh()
 		}
 	}
 
-	return ToToken(text, isNum), err
+	if err != nil && err == io.EOF {
+		// if err and not EOF, increase err count
+		s.fullScaned = true
+	}
+
+	return ToToken(text, isNum), pos
 }
 
-func NextChar() (string, error) {
-	scanner.srcIndex += 1
-	if scanner.srcIndex >= len(scanner.src) {
+func (s *Scanner) nextCh() (string, error) {
+	s.srcIndex += 1
+	if s.srcIndex >= len(s.src) {
 		return "", io.EOF
 	}
-	return string(scanner.src[scanner.srcIndex]), nil
+	return string(s.src[s.srcIndex]), nil
+}
+
+func (s *Scanner) PeepCh() (string, error) {
+	if s.srcIndex+1 >= len(s.src) {
+		return "", io.EOF
+	}
+	return string(s.src[s.srcIndex+1]), nil
+}
+
+func (s *Scanner) undoCh() {
+	if 0 <= s.srcIndex-1 {
+		s.srcIndex -= 1
+	}
+}
+
+func (s *Scanner) push(token Token) {
+	s.tokens = append(s.tokens, token)
 }
 
 func ToToken(token string, num bool) Token {
 	if num {
-		return Token{token, NumberType}
+		if strings.Contains(token, ".") {
+			return Token{token, DoubleType}
+		} else {
+			return Token{token, IntType}
+		}
 	}
 
 	kind := KeywordType(token)
@@ -92,35 +137,4 @@ func IsSpace(ch string) bool {
 		return true
 	}
 	return false
-}
-
-func (s *Scanner) next() Token {
-	s.tokenIndex += 1
-	return s.tokens[s.tokenIndex]
-}
-
-func (s *Scanner) push(token Token) {
-	s.tokens = append(s.tokens, token)
-}
-
-func PeepChar() string {
-	return string(scanner.src[scanner.srcIndex])
-}
-
-func Kind(ch string) CharType {
-	switch ch {
-	case "a", "b", "c", "d", "e",
-		"f", "g", "h", "i", "j",
-		"k", "l", "m", "n", "o",
-		"p", "q", "r", "s", "t",
-		"u", "v", "w", "x", "y", "z":
-		return LETTER
-	case "0", "1", "2", "3", "4",
-		"5", "6", "7", "8", "9":
-		return DIGIT
-	case ".":
-		return DOUBLE_QUOTE
-	default:
-		return OTHER
-	}
 }

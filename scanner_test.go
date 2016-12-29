@@ -4,22 +4,20 @@ import (
 	"io"
 	"testing"
 
-	"fmt"
-
 	"github.com/stretchr/testify/assert"
 )
 
-func initScanner(src string) {
+func initScanner(src string) *Scanner {
+	scanner := Scanner{}
+	scanner.Init()
 	scanner.src = []byte(src)
-	scanner.tokens = []Token{}
-	scanner.srcIndex = -1
-	scanner.tokenIndex = -1
+	return &scanner
 }
 
-func TestNextChar(t *testing.T) {
-	initScanner("if else for + - * /")
+func TestNextCh(t *testing.T) {
+	scanner := initScanner("if else for + - * /")
 	for {
-		ch, err := NextChar()
+		ch, err := scanner.nextCh()
 		if err != nil && err == io.EOF {
 			break
 		}
@@ -27,19 +25,19 @@ func TestNextChar(t *testing.T) {
 	}
 }
 
-func TestTokenize(t *testing.T) {
-	initScanner("if else for + - * /")
-	tokens := Tokenize()
-	fmt.Println(tokens)
-	assert.Equal(t, len(tokens), 7)
+func TestScan(t *testing.T) {
+	scanner := initScanner("func main() {}")
+	tokType := []TokenType{FuncType, IdentType, LBraceType, RBraceType, EOFType}
+	for i := 0; !scanner.fullScaned; i++ {
+		tok, _ := scanner.next()
+		assert.Equal(t, tokType[i], tok.kind)
+	}
 
-	initScanner("func main() {}")
-	tokens = Tokenize()
-	fmt.Println(tokens)
-	assert.Equal(t, len(tokens), 3)
-
-	initScanner("for (;;) {}")
-	tokens = Tokenize()
-	fmt.Println(tokens)
-	assert.Equal(t, len(tokens), 3)
+	scanner = initScanner("for (;;) {}")
+	tokType = []TokenType{ForType, IdentType, LBraceType, RBraceType, EOFType}
+	for i := 0; !scanner.fullScaned; i++ {
+		tok, _ := scanner.next()
+		println(tok.val, tok.kind)
+		assert.Equal(t, tokType[i], tok.kind)
+	}
 }
