@@ -14,8 +14,6 @@ type Scanner struct {
 }
 
 func (s *Scanner) Init() {
-	s.tokens = []Token{}
-	s.tokenIndex = -1
 	s.srcIndex = -1
 }
 
@@ -28,31 +26,27 @@ func (s *Scanner) peek() (Token, int) {
 }
 
 // For comment
-func (s *Scanner) nextLine() Token {
+func (s *Scanner) nextLine() (Token, int) {
 	text := ""
+	pos := s.srcIndex
 	for {
-		if p, err := s.PeepCh(); err == io.EOF || p == "\n" {
+		ch, err := s.nextCh()
+		if ch == "\n" || err == io.EOF {
 			break
 		}
-		ch, _ := s.nextCh()
 		text += ch
 	}
-	return Token{text, CommentType}
+	return Token{text, CommentType}, pos
 }
 
 func (s *Scanner) next() (Token, int) {
+	ch, err := s.skipWhiteSpace()
+
 	pos := s.srcIndex
-	ch, err := s.nextCh()
+
 	if err != nil && err == io.EOF {
 		s.fullScaned = true
 		return Token{"", EOFType}, pos
-	}
-
-	for IsSpace(ch) || ch == "\n" {
-		ch, err = s.nextCh()
-		if err != nil && err != io.EOF {
-			panic(err)
-		}
 	}
 
 	text := ""
@@ -60,6 +54,10 @@ func (s *Scanner) next() (Token, int) {
 	switch Kind(ch) {
 	case LETTER:
 		for ch != Space && err != io.EOF {
+			if ch == LParen {
+				s.undoCh()
+				break
+			}
 			text += ch
 			ch, err = s.nextCh()
 		}
@@ -72,12 +70,8 @@ func (s *Scanner) next() (Token, int) {
 			}
 			ch, err = s.nextCh()
 		}
-	case LBRACE:
-		return ToToken(ch, isNum), pos
-	case RBRACE:
-		return ToToken(ch, isNum), pos
 	default: // Operator
-		for ch != Space && err != io.EOF {
+		for ch != Space && ch != "\n" && err != io.EOF {
 			text += ch
 			if p, _ := s.PeepCh(); Kind(p) != OTHER {
 				break
@@ -115,8 +109,15 @@ func (s *Scanner) undoCh() {
 	}
 }
 
-func (s *Scanner) push(token Token) {
-	s.tokens = append(s.tokens, token)
+func (s *Scanner) skipWhiteSpace() (string, error) {
+	ch, err := s.nextCh()
+	for ch == " " || ch == "\n" || ch == "\t" || ch == "\r" {
+		ch, err = s.nextCh()
+		if err != nil && err != io.EOF {
+			panic(err)
+		}
+	}
+	return ch, err
 }
 
 func ToToken(token string, num bool) Token {
@@ -130,11 +131,4 @@ func ToToken(token string, num bool) Token {
 
 	kind := KeywordType(token)
 	return Token{token, kind}
-}
-
-func IsSpace(ch string) bool {
-	if ch == Space {
-		return true
-	}
-	return false
 }

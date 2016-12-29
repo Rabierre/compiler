@@ -27,17 +27,18 @@ func TestNextCh(t *testing.T) {
 
 func TestScan(t *testing.T) {
 	scanner := initScanner("func main() {}")
-	tokType := []TokenType{FuncType, IdentType, LBraceType, RBraceType, EOFType}
+	tokType := []TokenType{FuncType, IdentType, LParenType, RParenType, LBraceType, RBraceType, EOFType}
 	for i := 0; !scanner.fullScaned; i++ {
 		tok, _ := scanner.next()
 		assert.Equal(t, tokType[i], tok.kind)
 	}
 
-	scanner = initScanner("for (;;) {}")
-	tokType = []TokenType{ForType, IdentType, LBraceType, RBraceType, EOFType}
+	scanner = initScanner(`for (;;) {
+		}
+	`)
+	tokType = []TokenType{ForType, LParenType, SemiColType, SemiColType, RParenType, LBraceType, RBraceType, EOFType}
 	for i := 0; !scanner.fullScaned; i++ {
 		tok, _ := scanner.next()
-		println(tok.val, tok.kind)
 		assert.Equal(t, tokType[i], tok.kind)
 	}
 }
