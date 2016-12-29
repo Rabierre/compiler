@@ -24,10 +24,10 @@ const (
 	GreatEqType
 	EqType
 	NotEqType
-	SpaceType
 	IdentType
 	CommentType
 	ReturnType
+	SemiColType
 	EOFType
 )
 
@@ -75,12 +75,12 @@ func KeywordType(token string) TokenType {
 		return EqType
 	case NotEq:
 		return NotEqType
-	case Space:
-		return SpaceType
 	case CmtSlash:
 		return CommentType
 	case Return:
 		return ReturnType
+	case SemiCol:
+		return SemiColType
 	}
 	return IdentType
 }
@@ -134,14 +134,14 @@ func (t TokenType) String() string {
 		return "eq"
 	case NotEqType:
 		return "notEq"
-	case SpaceType:
-		return "space"
 	case IdentType:
 		return "ident"
 	case CommentType:
 		return "comment"
 	case ReturnType:
 		return "return"
+	case SemiColType:
+		return ";"
 	case EOFType:
 		return "EOF"
 	}
@@ -156,6 +156,9 @@ const (
 	DOUBLE_QUOTE
 	LBRACE
 	RBRACE
+	LPAREN
+	RPAREN
+	SEMICOLON
 	OTHER
 )
 
@@ -176,6 +179,12 @@ func Kind(ch string) CharType {
 		return LBRACE
 	case "}":
 		return RBRACE
+	case "(":
+		return LPAREN
+	case ")":
+		return RPAREN
+	case ";":
+		return SEMICOLON
 	default:
 		return OTHER
 	}

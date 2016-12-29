@@ -25,4 +25,5 @@ const (
 	NotEq    = "!="
 	Space    = " "
 	CmtSlash = "//"
+	SemiCol  = ";"
 )
