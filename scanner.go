@@ -54,7 +54,7 @@ func (s *Scanner) next() (Token, int) {
 	switch Kind(ch) {
 	case LETTER:
 		for ch != Space && err != io.EOF {
-			if ch == LParen {
+			if ch == LParen || ch == RParen || ch == CommaLit {
 				s.undoCh()
 				break
 			}
@@ -70,6 +70,8 @@ func (s *Scanner) next() (Token, int) {
 			}
 			ch, err = s.nextCh()
 		}
+	case COMMA:
+		text += ch
 	default: // Operator
 		for ch != Space && ch != "\n" && err != io.EOF {
 			text += ch

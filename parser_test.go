@@ -31,15 +31,17 @@ func TestParseFunction(t *testing.T) {
 				// Comment 3
 			}
 		}
+		func func4(int a, double b) {
+		}
 	`
 	parser := initParser(src)
 	parser.Parse()
 
 	assert.NotNil(t, parser.topScope)
-	assert.Equal(t, 3, len(parser.decls))
-	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name)
+	assert.Equal(t, 4, len(parser.decls))
+	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name.val)
 	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
-	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name)
+	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name.val)
 	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
 }
 

@@ -57,12 +57,13 @@ func (p *Parser) parseFunc() {
 	ident := p.parseIdent()
 	// 2. get parameters
 	p.expect(LParenType)
-	// TODO
+	// TODO get param as Expr
+	params := p.parseParamList()
 	p.expect(RParenType)
 	// 3. parse body
 	body := p.parseBody() // parse compound statement
 	// 4. make funcDecl
-	funcDecl := &FuncDecl{Name: ident, Body: body}
+	funcDecl := &FuncDecl{Name: ident, Body: body, Params: params}
 	// 5. add to decl
 	p.decls = append(p.decls, funcDecl)
 }
@@ -73,7 +74,29 @@ func (p *Parser) parseIdent() Ident {
 		panic("Not function identifier: " + tok.val + " " + tok.kind.String())
 	}
 
-	return Ident{Name: tok.val, Pos: pos}
+	return Ident{Name: tok, Pos: pos}
+}
+
+func (p *Parser) parseParamList() *ArgList {
+	list := []Arg{}
+
+	for tok, _ := p.peek(); tok.kind == IntType || tok.kind == DoubleType; {
+		list = append(list, p.parseParam())
+
+		if tok, _ := p.peek(); tok.kind != CommaType && tok.kind == RParenType {
+			break
+		}
+		p.next()
+	}
+	return &ArgList{List: list}
+}
+
+func (p *Parser) parseParam() Arg {
+	tok, pos := p.next()
+	arg := Arg{Pos: pos, Type: tok}
+	tok, pos = p.next()
+	arg.Name = Ident{Pos: pos, Name: tok}
+	return arg
 }
 
 func (p *Parser) parseBody() *CompoundStmt {
@@ -207,94 +230,6 @@ func (p *Parser) parseComment() {
 			fmt.Println(cmt)
 		}
 	}
-}
-
-type Ident struct {
-	Pos  int
-	Name string
-}
-
-type Field struct {
-}
-
-type ArgList struct {
-	fields []*Field
-}
-
-type Decl interface {
-	declNode()
-}
-
-type FuncDecl struct {
-	Name   Ident
-	Body   *CompoundStmt // body or nil
-	Params *ArgList      // list of parameters
-}
-
-func (*FuncDecl) declNode() {}
-
-type CompoundStmt struct {
-	LBracePos int
-	RBracePos int
-	List      []Stmt
-}
-
-type Stmt interface {
-	// IfStmt
-	// ForStmt
-	// Expr
-	// CompoundStmt
-	// "return" Expr ?
-	stmtNode()
-}
-
-type ForStmt struct {
-	Pos  int
-	Init Stmt
-	Cond Stmt // TODO expr
-	Post Stmt
-	Body *CompoundStmt
-}
-
-type EmptyStmt struct {
-}
-
-type BadStmt struct {
-	From int
-}
-
-func (*CompoundStmt) stmtNode() {}
-func (*ForStmt) stmtNode()      {}
-func (*EmptyStmt) stmtNode()    {}
-func (*BadStmt) stmtNode()      {}
-
-// ------------------------------------------------------------------
-// TODO go somewhere
-type CommentList struct {
-	comments []*Comment
-}
-
-func (c *CommentList) Insert(comment *Comment) {
-	c.comments = append(c.comments, comment)
-}
-
-type Comment struct {
-	pos  int // TODO position of comment slash' in source code
-	text string
-}
-
-type Scope struct {
-	outer   *Scope
-	Objects []*Object // better contain name of it for convenient search decl in this scope
-}
-
-func (s *Scope) Insert(obj *Object) {
-	s.Objects = append(s.Objects, obj)
-}
-
-type Object struct {
-	// Kind Type
-	decl interface{} // statement(function, for, if..), expression
 }
 
 // // What to do with tokens? where should we save them?

@@ -26,4 +26,5 @@ const (
 	Space    = " "
 	CmtSlash = "//"
 	SemiCol  = ";"
+	CommaLit = ","
 )

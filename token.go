@@ -28,6 +28,7 @@ const (
 	CommentType
 	ReturnType
 	SemiColType
+	CommaType
 	EOFType
 )
 
@@ -81,6 +82,8 @@ func KeywordType(token string) TokenType {
 		return ReturnType
 	case SemiCol:
 		return SemiColType
+	case CommaLit:
+		return CommaType
 	}
 	return IdentType
 }
@@ -142,6 +145,8 @@ func (t TokenType) String() string {
 		return "return"
 	case SemiColType:
 		return ";"
+	case CommaType:
+		return "comma"
 	case EOFType:
 		return "EOF"
 	}
@@ -159,6 +164,7 @@ const (
 	LPAREN
 	RPAREN
 	SEMICOLON
+	COMMA
 	OTHER
 )
 
@@ -185,6 +191,8 @@ func Kind(ch string) CharType {
 		return RPAREN
 	case ";":
 		return SEMICOLON
+	case ",":
+		return COMMA
 	default:
 		return OTHER
 	}

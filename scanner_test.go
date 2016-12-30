@@ -26,8 +26,8 @@ func TestNextCh(t *testing.T) {
 }
 
 func TestScan(t *testing.T) {
-	scanner := initScanner("func main() {}")
-	tokType := []TokenType{FuncType, IdentType, LParenType, RParenType, LBraceType, RBraceType, EOFType}
+	scanner := initScanner("func main(int a, double b) {}")
+	tokType := []TokenType{FuncType, IdentType, LParenType, IntType, IdentType, CommaType, DoubleType, IdentType, RParenType, LBraceType, RBraceType, EOFType}
 	for i := 0; !scanner.fullScaned; i++ {
 		tok, _ := scanner.next()
 		assert.Equal(t, tokType[i], tok.kind)
