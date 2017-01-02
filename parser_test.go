@@ -27,7 +27,7 @@ func TestParseFunction(t *testing.T) {
 			// Comment 2
 		}
 		func func3() {
-			for(;;) {
+			for(int i = 0; i < 10; i++) {
 				// Comment 3
 			}
 		}
@@ -45,14 +45,32 @@ func TestParseFunction(t *testing.T) {
 	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
 }
 
-func TestParseFor(t *testing.T) {
-	src := `for (;;) {
+func TestparseForStmt(t *testing.T) {
+	src := `for (;i < 10; i++) {
 			// Comment
 
 		}
 	`
 	parser := initParser(src)
-	stmt := parser.parseStmt()
+	stmt := parser.parseForStmt()
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*ForStmt).Cond)
+	assert.NotNil(t, stmt.(*ForStmt).Post)
+}
+
+func TestParseIfStmt(t *testing.T) {
+	src := `if (1 == 2) {
+			// Comment
+
+		}
+	`
+	parser := initParser(src)
+	stmt := parser.parseIfStmt()
+	assert.NotNil(t, stmt)
+	assert.NotNil(t, stmt.(*IfStmt).Cond)
+	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
+	// TODO Use reflect
+	assert.Equal(t, "1", cond.LValue.(*BasicLit).Value)
+	assert.Equal(t, "==", cond.Op.val)
+	assert.Equal(t, "2", cond.RValue.(*BasicLit).Value)
 }

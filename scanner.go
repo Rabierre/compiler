@@ -41,6 +41,7 @@ func (s *Scanner) nextLine() (Token, int) {
 
 func (s *Scanner) next() (Token, int) {
 	ch, err := s.skipWhiteSpace()
+	// println(ch)
 
 	pos := s.srcIndex
 
@@ -53,7 +54,7 @@ func (s *Scanner) next() (Token, int) {
 	isNum := false
 	switch Kind(ch) {
 	case LETTER:
-		for ch != Space && err != io.EOF {
+		for ch != "\n" && ch != "\t" && ch != Space && err != io.EOF {
 			if ch == LParen || ch == RParen || ch == CommaLit {
 				s.undoCh()
 				break
@@ -68,7 +69,12 @@ func (s *Scanner) next() (Token, int) {
 			if Kind(ch) == LETTER {
 				panic("Invalid variable name: " + text)
 			}
+
 			ch, err = s.nextCh()
+			if kind := Kind(ch); kind != DIGIT || kind != DOT {
+				s.undoCh()
+				break
+			}
 		}
 	case COMMA:
 		text += ch
@@ -125,9 +131,9 @@ func (s *Scanner) skipWhiteSpace() (string, error) {
 func ToToken(token string, num bool) Token {
 	if num {
 		if strings.Contains(token, ".") {
-			return Token{token, DoubleType}
+			return Token{token, DoubleLit}
 		} else {
-			return Token{token, IntType}
+			return Token{token, IntLit}
 		}
 	}
 

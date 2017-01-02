@@ -41,4 +41,14 @@ func TestScan(t *testing.T) {
 		tok, _ := scanner.next()
 		assert.Equal(t, tokType[i], tok.kind)
 	}
+
+	scanner = initScanner(`if (1 == 2) {
+			// comment
+		}
+	`)
+	tokType = []TokenType{IfType, LParenType, IntLit, EqType, IntLit, RParenType, LBraceType, CommentType, IdentType, RBraceType, EOFType}
+	for i := 0; !scanner.fullScaned; i++ {
+		tok, _ := scanner.next()
+		assert.Equal(t, tokType[i], tok.kind)
+	}
 }

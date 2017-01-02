@@ -1,10 +1,5 @@
 package main
 
-type Ident struct {
-	Pos  int
-	Name Token
-}
-
 type Node interface {
 }
 
@@ -15,11 +10,37 @@ type Expr interface {
 	exprNode()
 }
 
+type BasicLit struct {
+	Pos   int
+	Value string
+	Type  TokenType
+}
+
+// Term
 type BinaryExpr struct {
-	Pos      int
-	LValue   Expr
-	RValue   Expr
-	Operator Token
+	Pos    int
+	LValue Expr
+	RValue Expr
+	Op     Token
+}
+
+// Factor
+type UnaryExpr struct {
+	Pos    int
+	Op     Token
+	RValue Expr
+}
+
+type Ident struct {
+	Pos  int
+	Name Token
+}
+
+type CallExpr struct {
+	Name      Expr
+	Params    *ArgList
+	LParenPos int
+	RParenPos int
 }
 
 type Arg struct {
@@ -28,12 +49,22 @@ type Arg struct {
 	Name Ident
 }
 
-func (*BinaryExpr) exprNode() {}
-func (*Arg) exprNode()        {}
-
 type ArgList struct {
 	List []Arg
 }
+
+type BadExpr struct {
+	From int
+	To   int
+}
+
+func (*BasicLit) exprNode()   {}
+func (*Ident) exprNode()      {}
+func (*BinaryExpr) exprNode() {}
+func (*UnaryExpr) exprNode()  {}
+func (*CallExpr) exprNode()   {}
+func (*Arg) exprNode()        {}
+func (*BadExpr) exprNode()    {}
 
 //--------------------------------------------------------------------------------------
 // Declaration
@@ -75,8 +106,8 @@ type IfStmt struct {
 type ForStmt struct {
 	Pos  int
 	Init Stmt
-	Cond Stmt // TODO expr
-	Post Stmt
+	Cond Expr
+	Post Expr
 	Body *CompoundStmt
 }
 
@@ -89,6 +120,7 @@ type BadStmt struct {
 
 func (*CompoundStmt) stmtNode() {}
 func (*ForStmt) stmtNode()      {}
+func (*IfStmt) stmtNode()       {}
 func (*EmptyStmt) stmtNode()    {}
 func (*BadStmt) stmtNode()      {}
 

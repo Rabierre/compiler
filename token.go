@@ -13,6 +13,8 @@ const (
 	RBraceType
 	IntType
 	DoubleType
+	IntLit
+	DoubleLit
 	PlusType
 	MinusType
 	MultiType
@@ -149,8 +151,12 @@ func (t TokenType) String() string {
 		return "comma"
 	case EOFType:
 		return "EOF"
+	case IntLit:
+		return "IntLit"
+	case DoubleLit:
+		return "DoubleLit"
 	}
-	return "WRONG TYPE"
+	return "NONE"
 }
 
 type CharType int
@@ -158,7 +164,7 @@ type CharType int
 const (
 	LETTER CharType = iota
 	DIGIT
-	DOUBLE_QUOTE
+	DOT
 	LBRACE
 	RBRACE
 	LPAREN
@@ -169,31 +175,53 @@ const (
 )
 
 func Kind(ch string) CharType {
-	switch ch {
-	case "a", "b", "c", "d", "e",
-		"f", "g", "h", "i", "j",
-		"k", "l", "m", "n", "o",
-		"p", "q", "r", "s", "t",
-		"u", "v", "w", "x", "y", "z":
+	if ch == "" {
+		return OTHER
+	}
+
+	c := []rune(ch)[0]
+	switch {
+	case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
 		return LETTER
-	case "0", "1", "2", "3", "4",
-		"5", "6", "7", "8", "9":
+	case '1' <= c && c <= '0':
 		return DIGIT
-	case ".":
-		return DOUBLE_QUOTE
-	case "{":
+	case c == '.':
+		return DOT
+	case c == '{':
 		return LBRACE
-	case "}":
+	case c == '}':
 		return RBRACE
-	case "(":
+	case c == '(':
 		return LPAREN
-	case ")":
+	case c == ')':
 		return RPAREN
-	case ";":
+	case c == ';':
 		return SEMICOLON
-	case ",":
+	case c == ',':
 		return COMMA
 	default:
 		return OTHER
 	}
+}
+
+const (
+	LowestPriority  = 0 // non-operators
+	UnaryPriority   = 6
+	HighestPriority = 7
+)
+
+func (t Token) Priority() int {
+	switch t.kind {
+	// case LOR:
+	// 	return 1
+	// case LAND:
+	// 	return 2
+	case EqType, NotEqType, LessType, LessEqType, GreatType, GreatEqType:
+		return 3
+	case PlusType, MinusType:
+		return 4
+	case MultiType, DivideType:
+		return 5
+	}
+	return LowestPriority
 }

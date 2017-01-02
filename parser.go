@@ -7,13 +7,14 @@ import (
 const debug = true
 
 type Parser struct {
-	topScope *Scope // currently don't support multi level scope. eg can't use function in function
+	topScope *Scope
 	scanner  *Scanner
 
 	comments *CommentList
 
 	// If we handle source codes in files
 	// This should go in file struct
+	//
 	decls []Decl
 }
 
@@ -47,6 +48,9 @@ func (p *Parser) parseDecl() {
 	tok, _ := p.scanner.next()
 	println("parse decl: ", tok.val, tok.kind.String())
 	switch tok.kind {
+	// By spec for now, no global variable, no imports are available.
+	// Function is top scope
+	//
 	case FuncType:
 		p.parseFunc()
 	}
@@ -69,11 +73,11 @@ func (p *Parser) parseFunc() {
 }
 
 func (p *Parser) parseIdent() Ident {
-	tok, pos := p.next()
-	if tok.kind != IdentType {
-		panic("Not function identifier: " + tok.val + " " + tok.kind.String())
+	tok, pos := p.peek()
+	if tok.kind == IdentType {
+		p.next()
 	}
-
+	// TODO else error
 	return Ident{Name: tok, Pos: pos}
 }
 
@@ -145,11 +149,11 @@ func (p *Parser) parseStmt() Stmt {
 
 	switch token.kind {
 	case IntType, DoubleType:
-		// expression
+		// expression? decl?
 	case ForType:
 		return p.parseForStmt()
 	case IfType:
-		// IfStmt
+		return p.parseIfStmt()
 	case ReturnType:
 		// "return" Expr ?
 	case LBraceType:
@@ -165,20 +169,112 @@ func (p *Parser) parseStmt() Stmt {
 
 func (p *Parser) parseForStmt() Stmt {
 	_, pos := p.next()
+
 	// 1. get initial status
 	p.expect(LParenType)
-	init := &EmptyStmt{}
+	// init := &EmptyStmt{}
+	init := p.parseStmt()
 	p.expect(SemiColType)
 	// 2. get condition
-	cond := &EmptyStmt{}
+	cond := p.parseExpr()
 	p.expect(SemiColType)
 	// 3. get post stmt
-	post := &EmptyStmt{}
+	post := p.parseExpr()
 	p.expect(RParenType)
+
 	// 4. parse body
-	body := p.parseBody() // parse compound statement
+	body := p.parseBody()
+
 	// 5. make forDecl
 	return &ForStmt{Pos: pos, Cond: cond, Init: init, Post: post, Body: body}
+}
+
+func (p *Parser) parseIfStmt() Stmt {
+	_, pos := p.next()
+
+	p.expect(LParenType)
+	// TODO parse cond
+	// If cond is nil, error
+	cond := p.parseExpr()
+	p.expect(RParenType)
+
+	body := p.parseBody()
+	return &IfStmt{Pos: pos, Cond: cond, Body: body}
+}
+
+func (p *Parser) parseExpr() Expr {
+	return p.parseBinaryExpr(LowestPriority + 1)
+}
+
+// parse Term
+func (p *Parser) parseBinaryExpr(prio int) Expr {
+	// indetifier op expr
+	x := p.parseUnaryExpr()
+	for {
+		tok, _ := p.peek()
+		// 1. if tok has high priority or equal than previous op
+		// parse continously
+		// 1-2. else return x
+		if tok.Priority() < prio {
+			return x
+		}
+		op, pos := p.next()
+		// 2. parse y as binay expr
+		y := p.parseBinaryExpr(op.Priority() + 1)
+
+		x = &BinaryExpr{Pos: pos, Op: op, LValue: x, RValue: y}
+	}
+}
+
+// parse Factor
+func (p *Parser) parseUnaryExpr() Expr {
+	// Factor ::= "(" Expr ")"
+	//         | AddSub Factor
+	//         | number
+	//         | string
+	tok, _ := p.peek()
+	switch tok.kind {
+	case PlusType, MinusType:
+		op, pos := p.next()
+		x := p.parseUnaryExpr()
+		return &UnaryExpr{Pos: pos, Op: op, RValue: x}
+	}
+
+	return p.parsePrimaryExpr()
+}
+
+func (p *Parser) parsePrimaryExpr() Expr {
+	// identifier "(" ExprList ? ")"
+	// identifier
+	x := p.parseOperand()
+	tok, _ := p.peek()
+	switch tok.kind {
+	case LParenType:
+		lparen := p.expect(LParenType)
+		// TODO parse expr
+		rparen := p.expect(RParenType)
+		return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen}
+	}
+	return x
+}
+
+func (p *Parser) parseOperand() Expr {
+	tok, pos := p.peek()
+	switch tok.kind {
+	case IdentType:
+		x := p.parseIdent()
+		// TODO check x is declared in this scope
+		return &x
+	case IntLit, DoubleLit:
+		p.next()
+		return &BasicLit{Pos: pos, Value: tok.val, Type: tok.kind}
+	}
+
+	// TODO resolve ident is what type of identifier
+	// function, variable,,
+
+	_, to := p.peek()
+	return &BadExpr{From: pos, To: to}
 }
 
 func (p *Parser) next() (Token, int) {
