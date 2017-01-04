@@ -124,6 +124,11 @@ type VarDeclStmt struct {
 	RValue Expr
 }
 
+type ReturnStmt struct {
+	Pos   int
+	Value Expr
+}
+
 type EmptyStmt struct {
 }
 
@@ -135,6 +140,7 @@ func (*CompoundStmt) stmtNode() {}
 func (*ForStmt) stmtNode()      {}
 func (*IfStmt) stmtNode()       {}
 func (*VarDeclStmt) stmtNode()  {}
+func (*ReturnStmt) stmtNode()   {}
 func (*EmptyStmt) stmtNode()    {}
 func (*BadStmt) stmtNode()      {}
 

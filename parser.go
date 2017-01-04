@@ -149,7 +149,6 @@ func (p *Parser) parseStmt() Stmt {
 
 	switch token.kind {
 	case IntType, DoubleType:
-		// expression? decl?
 		return p.parseVarDecl()
 	case ForType:
 		return p.parseForStmt()
@@ -157,6 +156,7 @@ func (p *Parser) parseStmt() Stmt {
 		return p.parseIfStmt()
 	case ReturnType:
 		// "return" Expr ?
+		return p.parseReturnStmt()
 	case LBraceType:
 		return p.parseCompoundStmt()
 	case RBraceType:
@@ -225,6 +225,17 @@ func (p *Parser) parseIfStmt() Stmt {
 		elseBody = p.parseBody()
 	}
 	return &IfStmt{Pos: pos, Cond: cond, Body: body, ElseBody: elseBody}
+}
+
+func (p *Parser) parseReturnStmt() Stmt {
+	_, pos := p.next()
+
+	var expr Expr
+	if tok, _ := p.peek(); tok.kind != EOFType && tok.kind != RBraceType {
+		expr = p.parseExpr()
+	}
+
+	return &ReturnStmt{Pos: pos, Value: expr}
 }
 
 func (p *Parser) parseExpr() Expr {

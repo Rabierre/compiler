@@ -112,3 +112,18 @@ func TestParseVarDecl(t *testing.T) {
 	assert.Equal(t, "a", varDecl.Name.Name.val)
 	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.val)
 }
+
+func TestParseReturnStmt(t *testing.T) {
+	src := `return`
+	parser := initParser(src)
+	stmt := parser.parseReturnStmt()
+	assert.NotNil(t, stmt)
+	assert.Nil(t, stmt.(*ReturnStmt).Value)
+
+	src = `return funcCall(a,1,true)`
+	parser = initParser(src)
+	stmt = parser.parseReturnStmt()
+	assert.NotNil(t, stmt)
+	assert.NotNil(t, stmt.(*ReturnStmt).Value)
+	assert.Equal(t, 3, len(stmt.(*ReturnStmt).Value.(*CallExpr).Params.List))
+}

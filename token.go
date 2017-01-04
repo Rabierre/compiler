@@ -155,8 +155,10 @@ func (t TokenType) String() string {
 		return "IntLit"
 	case DoubleLit:
 		return "DoubleLit"
+	default:
+		return "Ident"
 	}
-	return "NONE"
+	return ""
 }
 
 type CharType int
