@@ -11,7 +11,6 @@ IdentList ::= identifier ( "," IdentList ) ?
 Type ::= "int"
        | "double"
 Stmt ::= ForStmt
-       | Expr
        | IfStmt
        | CompoundStmt
        | ReturnStmt

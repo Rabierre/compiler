@@ -38,9 +38,13 @@ type Ident struct {
 
 type CallExpr struct {
 	Name      Expr
-	Params    *ArgList
+	Params    *ExprList
 	LParenPos int
 	RParenPos int
+}
+
+type ExprList struct {
+	List []Expr
 }
 
 type Arg struct {
@@ -111,6 +115,14 @@ type ForStmt struct {
 	Body *CompoundStmt
 }
 
+// TODO also value
+type VarDeclStmt struct {
+	Pos    int
+	Type   Token
+	Name   Ident
+	RValue Expr
+}
+
 type EmptyStmt struct {
 }
 
@@ -121,6 +133,7 @@ type BadStmt struct {
 func (*CompoundStmt) stmtNode() {}
 func (*ForStmt) stmtNode()      {}
 func (*IfStmt) stmtNode()       {}
+func (*VarDeclStmt) stmtNode()  {}
 func (*EmptyStmt) stmtNode()    {}
 func (*BadStmt) stmtNode()      {}
 

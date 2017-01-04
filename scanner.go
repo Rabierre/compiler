@@ -41,7 +41,6 @@ func (s *Scanner) nextLine() (Token, int) {
 
 func (s *Scanner) next() (Token, int) {
 	ch, err := s.skipWhiteSpace()
-	// println(ch)
 
 	pos := s.srcIndex
 
@@ -71,7 +70,7 @@ func (s *Scanner) next() (Token, int) {
 			}
 
 			ch, err = s.nextCh()
-			if kind := Kind(ch); kind != DIGIT || kind != DOT {
+			if kind := Kind(ch); kind != DIGIT && kind != DOT {
 				s.undoCh()
 				break
 			}
@@ -81,10 +80,12 @@ func (s *Scanner) next() (Token, int) {
 	default: // Operator
 		for ch != Space && ch != "\n" && err != io.EOF {
 			text += ch
-			if p, _ := s.PeepCh(); Kind(p) != OTHER {
+
+			ch, err = s.nextCh()
+			if Kind(ch) != OTHER {
+				s.undoCh()
 				break
 			}
-			ch, err = s.nextCh()
 		}
 	}
 

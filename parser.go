@@ -150,6 +150,7 @@ func (p *Parser) parseStmt() Stmt {
 	switch token.kind {
 	case IntType, DoubleType:
 		// expression? decl?
+		return p.parseVarDecl()
 	case ForType:
 		return p.parseForStmt()
 	case IfType:
@@ -165,6 +166,26 @@ func (p *Parser) parseStmt() Stmt {
 	}
 	// No statement? error
 	return &BadStmt{From: pos}
+}
+
+func (p *Parser) parseVarDecl() Stmt {
+	typ, pos := p.next()
+	fmt.Printf("parseVarDecl: %s, %s\n", typ.val, typ.kind.String())
+
+	// int a = 1
+	// double b = 1.0
+	// int c
+	ident := p.parseIdent()
+	var value Expr
+	tok, pos := p.peek()
+	if tok.kind == AssignType {
+		p.next()
+		value = p.parseExpr()
+	}
+
+	// TODO resolve with scope
+
+	return &VarDeclStmt{Pos: pos, Type: typ, Name: ident, RValue: value}
 }
 
 func (p *Parser) parseForStmt() Stmt {
@@ -193,8 +214,7 @@ func (p *Parser) parseIfStmt() Stmt {
 	_, pos := p.next()
 
 	p.expect(LParenType)
-	// TODO parse cond
-	// If cond is nil, error
+	// TODO: If cond is nil, error
 	cond := p.parseExpr()
 	p.expect(RParenType)
 
@@ -204,6 +224,21 @@ func (p *Parser) parseIfStmt() Stmt {
 
 func (p *Parser) parseExpr() Expr {
 	return p.parseBinaryExpr(LowestPriority + 1)
+}
+
+func (p *Parser) parseExprList() *ExprList {
+	var exprs []Expr
+	for {
+		// 1. parse expr
+		exprs = append(exprs, p.parseExpr())
+		// 2. if next token is COMMA then continue
+		// 2-1. else return
+		if tok, _ := p.peek(); tok.kind != CommaType {
+			break
+		}
+		p.next()
+	}
+	return &ExprList{List: exprs}
 }
 
 // parse Term
@@ -251,9 +286,9 @@ func (p *Parser) parsePrimaryExpr() Expr {
 	switch tok.kind {
 	case LParenType:
 		lparen := p.expect(LParenType)
-		// TODO parse expr
+		params := p.parseExprList()
 		rparen := p.expect(RParenType)
-		return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen}
+		return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
 	}
 	return x
 }

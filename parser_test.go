@@ -46,7 +46,7 @@ func TestParseFunction(t *testing.T) {
 }
 
 func TestparseForStmt(t *testing.T) {
-	src := `for (;i < 10; i++) {
+	src := `for (int i = 0;i < 10; i++) {
 			// Comment
 
 		}
@@ -73,4 +73,22 @@ func TestParseIfStmt(t *testing.T) {
 	assert.Equal(t, "1", cond.LValue.(*BasicLit).Value)
 	assert.Equal(t, "==", cond.Op.val)
 	assert.Equal(t, "2", cond.RValue.(*BasicLit).Value)
+}
+
+func TestParseVarDecl(t *testing.T) {
+	src := `int a = 10`
+	parser := initParser(src)
+	stmt := parser.parseVarDecl()
+	assert.NotNil(t, stmt)
+	varDecl := stmt.(*VarDeclStmt)
+	assert.Equal(t, "a", varDecl.Name.Name.val)
+	assert.Equal(t, "10", varDecl.RValue.(*BasicLit).Value)
+
+	src = `int a = funcCall(b,c)`
+	parser = initParser(src)
+	stmt = parser.parseVarDecl()
+	assert.NotNil(t, stmt)
+	varDecl = stmt.(*VarDeclStmt)
+	assert.Equal(t, "a", varDecl.Name.Name.val)
+	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.val)
 }

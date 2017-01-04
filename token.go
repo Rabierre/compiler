@@ -183,7 +183,7 @@ func Kind(ch string) CharType {
 	switch {
 	case 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z':
 		return LETTER
-	case '1' <= c && c <= '0':
+	case '0' <= c && c <= '9':
 		return DIGIT
 	case c == '.':
 		return DOT
