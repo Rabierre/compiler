@@ -78,6 +78,17 @@ func TestParseIfStmt(t *testing.T) {
 	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: IntLit}, cond.LValue))
 	assert.True(t, DeepEqual(Token{val: "==", kind: EqType}, cond.Op))
 	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: IntLit}, cond.RValue))
+
+	src = `if (1 == 2) {
+			// Comment
+
+		}
+	`
+	parser = initParser(src)
+	stmt = parser.parseIfStmt()
+	assert.NotNil(t, stmt)
+	assert.NotNil(t, stmt.(*IfStmt).Cond)
+	assert.Nil(t, stmt.(*IfStmt).ElseBody)
 }
 
 func DeepEqual(a, b interface{}) bool {
