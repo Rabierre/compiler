@@ -27,4 +27,6 @@ const (
 	CmtSlash = "//"
 	SemiCol  = ";"
 	CommaLit = ","
+	True     = "true"
+	False    = "false"
 )

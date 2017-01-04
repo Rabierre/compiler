@@ -316,7 +316,7 @@ func (p *Parser) parseOperand() Expr {
 		x := p.parseIdent()
 		// TODO check x is declared in this scope
 		return &x
-	case IntLit, DoubleLit:
+	case IntLit, DoubleLit, TrueLit, FalseLit:
 		p.next()
 		return &BasicLit{Pos: pos, Value: tok.val, Type: tok.kind}
 	}

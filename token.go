@@ -31,6 +31,8 @@ const (
 	ReturnType
 	SemiColType
 	CommaType
+	TrueLit
+	FalseLit
 	EOFType
 )
 
@@ -86,6 +88,10 @@ func KeywordType(token string) TokenType {
 		return SemiColType
 	case CommaLit:
 		return CommaType
+	case True:
+		return TrueLit
+	case False:
+		return FalseLit
 	}
 	return IdentType
 }
@@ -155,6 +161,10 @@ func (t TokenType) String() string {
 		return "IntLit"
 	case DoubleLit:
 		return "DoubleLit"
+	case TrueLit:
+		return "TrueLit"
+	case FalseLit:
+		return "FalseLit"
 	default:
 		return "Ident"
 	}
