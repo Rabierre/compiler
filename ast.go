@@ -87,6 +87,7 @@ type FuncDecl struct {
 }
 
 func (*FuncDecl) declNode()    {}
+func (*VarDeclStmt) declNode() {}
 
 //--------------------------------------------------------------------------------------
 // Statement
