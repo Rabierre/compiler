@@ -364,7 +364,6 @@ func (p *Parser) CloseScope() {
 
 // TODO move to scanner
 func (p *Parser) parseComment() {
-	println("parsecomment")
 	token, pos := p.scanner.nextLine()
 
 	// TODO Use integer position in source code not token index

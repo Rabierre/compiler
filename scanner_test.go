@@ -57,8 +57,7 @@ func SuiteCase() []*Suite {
 }
 
 func TestScan(t *testing.T) {
-	TestSuite := SuiteCase()
-	for _, suite := range TestSuite {
+	for _, suite := range SuiteCase() {
 		scanner := initScanner(suite.src)
 		for i := 0; !scanner.fullScaned; i++ {
 			tok, _ := scanner.next()

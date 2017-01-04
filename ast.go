@@ -5,9 +5,14 @@ type Node interface {
 
 //--------------------------------------------------------------------------------------
 // Expression
+//
 type Expr interface {
 	Node
 	exprNode()
+}
+
+type ExprList struct {
+	List []Expr
 }
 
 type BasicLit struct {
@@ -43,13 +48,9 @@ type CallExpr struct {
 	RParenPos int
 }
 
-type ExprList struct {
-	List []Expr
-}
-
 type Arg struct {
 	Pos  int
-	Type Token // int, double
+	Type Token
 	Name Ident
 }
 
@@ -79,12 +80,13 @@ type Decl interface {
 }
 
 type FuncDecl struct {
+	// TODO Pos
 	Name   Ident
-	Body   *CompoundStmt // body or nil
-	Params *ArgList      // list of parameters
+	Body   *CompoundStmt
+	Params *ArgList
 }
 
-func (*FuncDecl) declNode() {}
+func (*FuncDecl) declNode()    {}
 
 //--------------------------------------------------------------------------------------
 // Statement
@@ -116,7 +118,6 @@ type ForStmt struct {
 	Body *CompoundStmt
 }
 
-// TODO also value
 type VarDeclStmt struct {
 	Pos    int
 	Type   Token
@@ -165,7 +166,7 @@ type Comment struct {
 //
 type Scope struct {
 	outer   *Scope
-	Objects []*Object // better contain name of it for convenient search decl in this scope
+	Objects []*Object // better contain name of it for convenient when resolving
 }
 
 func (s *Scope) Insert(obj *Object) {
@@ -173,6 +174,6 @@ func (s *Scope) Insert(obj *Object) {
 }
 
 type Object struct {
-	// Kind Type
-	decl interface{} // statement(function, for, if..), expression
+	// TODO Has Type
+	decl interface{}
 }

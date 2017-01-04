@@ -17,7 +17,6 @@ func (s *Scanner) Init() {
 	s.srcIndex = -1
 }
 
-// TODO move to parser?
 func (s *Scanner) peek() (Token, int) {
 	index := s.srcIndex
 	tok, pos := s.next()
@@ -29,12 +28,14 @@ func (s *Scanner) peek() (Token, int) {
 func (s *Scanner) nextLine() (Token, int) {
 	text := ""
 	pos := s.srcIndex
-	for {
-		ch, err := s.nextCh()
-		if ch == "\n" || err == io.EOF {
-			break
-		}
+	if pos < 0 {
+		pos = 0
+	}
+
+	ch, err := s.nextCh()
+	for ch != "\n" && err != io.EOF {
 		text += ch
+		ch, err = s.nextCh()
 	}
 	return Token{text, CommentType}, pos
 }
