@@ -3,42 +3,28 @@ BNF description for LL(>=1) grammars
 ```
 Program ::= DeclList ?
 DeclList ::= ( VarDecl | FunctionDecl ) DeclList ?
-FunctionDecl ::= Type identifier "(" ArgList ? ")" CompoundStmt
-ArgList ::= Arg ( "," ArgList ) ?
-Arg ::= Type identifier
+FunctionDecl ::= Type identifier "(" VarDeclList ? ")" CompoundStmt
+VarDeclList ::= VarDecl VarDeclList ?
 VarDecl ::= Type IdentList
+IdentList ::= identifier ( "," IdentList ) ?
+       | identifier ( "=" Expr ) ?
 Type ::= "int"
-       | "float"
-IdentList ::= identifier ( "=" Expr ) ? ( "," IdentList ) ?
+       | "double"
 Stmt ::= ForStmt
-       | WhileStmt
-       | Expr
        | IfStmt
        | CompoundStmt
-       | "return" Expr ?
-ForStmt ::= "for" "(" Expr ";" OptExpr ";" OptExpr ")" CompoundStmt
+       | ReturnStmt
+ForStmt ::= "for" "(" OptExpr ";" OptExpr ";" OptExpr ")" CompoundStmt
 OptExpr ::= Expr ?
-WhileStmt ::= "while" "(" Expr ")" CompoundStmt
 IfStmt ::= "if" "(" Expr ")" CompoundStmt ElsePart
 ElsePart ::= ( "else" CompoundStmt ) ?
 CompoundStmt ::= "{" VarDeclList ? StmtList ? "}"
-VarDeclList ::= VarDecl VarDeclList ?
+ReturnStmt ::= "return" Expr ?
 StmtList ::= Stmt StmtList ?
 Expr ::= identifier "=" Expr
-       | Rvalue
-Rvalue ::= Mag ( Compare Rvalue ) ?
-Compare ::= "=="
-          | "<"
-          | ">"
-          | "<="
-          | ">="
-          | "!="
-Mag ::= Term ( AddSub Mag ) ?
-AddSub ::= "+"
-         | "-"
-Term ::= Factor ( MulDiv Term ) ?
-MulDiv ::= "*"
-         | "/"
+       | Term
+       | Factor
+Term ::= Factor ( Op Term )?
 Factor ::= "(" Expr ")"
          | AddSub Factor
          | identifier "(" ExprList ? ")"
@@ -46,4 +32,26 @@ Factor ::= "(" Expr ")"
          | number
          | string
 ExprList ::= Expr ( "," ExprList ) ?
+Comment ::= "//" string ?
+Op ::= "=="
+     | "<"
+     | ">"
+     | "<="
+     | ">="
+     | "!="
+     | "*"
+     | "/"
+     | "+="
+     | "-="
+     | "*="
+     | "/="
+     | "&="
+     | "|="
+     | "&&"
+     | "||"
+     | "&"
+     | "|"
+     | "^"
+AddSub ::= "+"
+         | "-"
 ```
