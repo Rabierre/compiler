@@ -362,11 +362,9 @@ func (p *Parser) CloseScope() {
 	p.topScope = p.topScope.outer
 }
 
-// TODO move to scanner
 func (p *Parser) parseComment() {
 	token, pos := p.scanner.nextLine()
 
-	// TODO Use integer position in source code not token index
 	comment := &Comment{pos, token.val}
 	p.comments.Insert(comment)
 
@@ -377,38 +375,3 @@ func (p *Parser) parseComment() {
 		}
 	}
 }
-
-// // What to do with tokens? where should we save them?
-// func ForStatement(forToken Token) Block {
-// 	block := Block{[]Filed{}, ForBlock}
-// 	// "for"
-// 	block.tokens = append(block.tokens, forToken)
-
-// 	token := scanner.next()
-// 	// "(" Expr ";" OptExpr ";" OptExpr ")"
-// 	if token.kind == LParenType {
-// 		// TODO initial statement
-// 		Expression(block)
-// 		scanner.next() // drop ";"
-// 		// TODO condition statement
-// 		Expression(block)
-// 		scanner.next() // drop ";"
-// 		// TODO increase statement
-// 		Expression(block)
-// 		scanner.next() // drop ")"
-// 	}
-// 	// CompoundStmt
-// 	CompoundStatement(block)
-
-// 	// // TODO add block to somewhere
-// 	return block
-// }
-
-// func Expression(block Block) {
-// 	token := scanner.next()
-// 	if token.kind == IdentType {
-// 		// identifier "=" Expr
-// 	} else {
-// 		// Rvalue
-// 	}
-// }
