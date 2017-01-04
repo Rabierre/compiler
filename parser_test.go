@@ -125,5 +125,14 @@ func TestParseReturnStmt(t *testing.T) {
 	stmt = parser.parseReturnStmt()
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*ReturnStmt).Value)
-	assert.Equal(t, 3, len(stmt.(*ReturnStmt).Value.(*CallExpr).Params.List))
+	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
+	assert.Equal(t, 3, len(params))
+	Set := map[TokenType]TokenType{
+		IdentType: params[0].(*Ident).Name.kind,
+		IntLit:    params[1].(*BasicLit).Type,
+		TrueLit:   params[2].(*BasicLit).Type,
+	}
+	for e, r := range Set {
+		assert.Equal(t, e, r)
+	}
 }
