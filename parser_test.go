@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -63,16 +64,24 @@ func TestParseIfStmt(t *testing.T) {
 			// Comment
 
 		}
+		else {
+			// comment
+		}
 	`
 	parser := initParser(src)
 	stmt := parser.parseIfStmt()
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*IfStmt).Cond)
+	assert.NotNil(t, stmt.(*IfStmt).ElseBody)
+
 	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
-	// TODO Use reflect
-	assert.Equal(t, "1", cond.LValue.(*BasicLit).Value)
-	assert.Equal(t, "==", cond.Op.val)
-	assert.Equal(t, "2", cond.RValue.(*BasicLit).Value)
+	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: IntLit}, cond.LValue))
+	assert.True(t, DeepEqual(Token{val: "==", kind: EqType}, cond.Op))
+	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: IntLit}, cond.RValue))
+}
+
+func DeepEqual(a, b interface{}) bool {
+	return reflect.DeepEqual(a, b)
 }
 
 func TestParseVarDecl(t *testing.T) {

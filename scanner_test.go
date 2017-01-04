@@ -43,8 +43,10 @@ func SuiteCase() []*Suite {
 	 	`, []TokenType{ForType, LParenType, SemiColType, SemiColType, RParenType, LBraceType, RBraceType, EOFType}},
 		&Suite{`if (1 == 2) {
 				// comment
+			} else {
+				// comment
 			}
-		`, []TokenType{IfType, LParenType, IntLit, EqType, IntLit, RParenType, LBraceType, CommentType, IdentType, RBraceType, EOFType}},
+		`, []TokenType{IfType, LParenType, IntLit, EqType, IntLit, RParenType, LBraceType, CommentType, IdentType, RBraceType, ElseType, LBraceType, CommentType, IdentType, RBraceType, EOFType}},
 		&Suite{`func func3() {
 					for(int i = 0; i < 10; i++) {
 					// Comment

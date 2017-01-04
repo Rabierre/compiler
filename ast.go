@@ -102,9 +102,10 @@ type CompoundStmt struct {
 }
 
 type IfStmt struct {
-	Pos  int
-	Cond Expr // Assign is not available
-	Body *CompoundStmt
+	Pos      int
+	Cond     Expr // Assign is not available
+	Body     *CompoundStmt
+	ElseBody Stmt
 }
 
 type ForStmt struct {

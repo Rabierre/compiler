@@ -214,12 +214,17 @@ func (p *Parser) parseIfStmt() Stmt {
 	_, pos := p.next()
 
 	p.expect(LParenType)
-	// TODO: If cond is nil, error
-	cond := p.parseExpr()
+	cond := p.parseExpr() // TODO: If cond is nil, error
 	p.expect(RParenType)
 
 	body := p.parseBody()
-	return &IfStmt{Pos: pos, Cond: cond, Body: body}
+
+	var elseBody Stmt
+	if tok, _ := p.peek(); tok.kind == ElseType {
+		p.next()
+		elseBody = p.parseBody()
+	}
+	return &IfStmt{Pos: pos, Cond: cond, Body: body, ElseBody: elseBody}
 }
 
 func (p *Parser) parseExpr() Expr {
