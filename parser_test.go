@@ -75,9 +75,9 @@ func TestParseIfStmt(t *testing.T) {
 	assert.NotNil(t, stmt.(*IfStmt).ElseBody)
 
 	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
-	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: IntLit}, cond.LValue))
-	assert.True(t, DeepEqual(Token{val: "==", kind: EqType}, cond.Op))
-	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: IntLit}, cond.RValue))
+	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: INT_LIT}, cond.LValue))
+	assert.True(t, DeepEqual(Token{val: "==", kind: EQ}, cond.Op))
+	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: INT_LIT}, cond.RValue))
 
 	src = `if (1 == 2) {
 			// Comment
@@ -129,9 +129,9 @@ func TestParseReturnStmt(t *testing.T) {
 	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
 	assert.Equal(t, 3, len(params))
 	Set := map[TokenType]TokenType{
-		IdentType: params[0].(*Ident).Name.kind,
-		IntLit:    params[1].(*BasicLit).Type,
-		TrueLit:   params[2].(*BasicLit).Type,
+		IDENT:   params[0].(*Ident).Name.kind,
+		INT_LIT: params[1].(*BasicLit).Type,
+		TRUE:    params[2].(*BasicLit).Type,
 	}
 	for e, r := range Set {
 		assert.Equal(t, e, r)
@@ -148,7 +148,7 @@ func TestNext(t *testing.T) {
 		int b
 	`
 	parser := initParser(src)
-	expects := []TokenType{IntType, IdentType, IntType, IdentType}
+	expects := []TokenType{INT, IDENT, INT, IDENT}
 	for _, exp := range expects {
 		tok, _ := parser.next()
 		assert.Equal(t, exp, tok.kind)

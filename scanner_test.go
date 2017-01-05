@@ -37,22 +37,22 @@ type Suite struct {
 
 func SuiteCase() []*Suite {
 	return []*Suite{
-		&Suite{"func main(int a, double b) {}", []TokenType{FuncType, IdentType, LParenType, IntType, IdentType, CommaType, DoubleType, IdentType, RParenType, LBraceType, RBraceType, EOFType}},
+		&Suite{"func main(int a, double b) {}", []TokenType{FUNC, IDENT, LPAREN, INT, IDENT, COMMA, DOUBLE, IDENT, RPAREN, LBRACE, RBRACE, EOF}},
 		&Suite{`for (;;) {
 	 		}
-	 	`, []TokenType{ForType, LParenType, SemiColType, SemiColType, RParenType, LBraceType, RBraceType, EOFType}},
+	 	`, []TokenType{FOR, LPAREN, SEMI_COLON, SEMI_COLON, RPAREN, LBRACE, RBRACE, EOF}},
 		&Suite{`if (1 == 2) {
 				// comment
 			} else {
 				// comment
 			}
-		`, []TokenType{IfType, LParenType, IntLit, EqType, IntLit, RParenType, LBraceType, CommentType, IdentType, RBraceType, ElseType, LBraceType, CommentType, IdentType, RBraceType, EOFType}},
+		`, []TokenType{IF, LPAREN, INT_LIT, EQ, INT_LIT, RPAREN, LBRACE, COMMENT_SLASH, IDENT, RBRACE, ELSE, LBRACE, COMMENT_SLASH, IDENT, RBRACE, EOF}},
 		&Suite{`func func3() {
 					for(int i = 0; i < 10; i++) {
 					// Comment
 				}
 			}
-		`, []TokenType{FuncType, IdentType, LParenType, RParenType, LBraceType, ForType, LParenType, IntType, IdentType, AssignType, IntLit, SemiColType, IdentType, LessType, IntLit, SemiColType, IdentType, RParenType, LBraceType, CommentType, IdentType, RBraceType, RBraceType, EOFType}},
+		`, []TokenType{FUNC, IDENT, LPAREN, RPAREN, LBRACE, FOR, LPAREN, INT, IDENT, ASSIGN, INT_LIT, SEMI_COLON, IDENT, LESS, INT_LIT, SEMI_COLON, IDENT, RPAREN, LBRACE, COMMENT_SLASH, IDENT, RBRACE, RBRACE, EOF}},
 	}
 }
 
