@@ -81,7 +81,8 @@ func TestParseIfStmt(t *testing.T) {
 
 	src = `if (1 == 2) {
 			// Comment
-
+			// Comment
+			// Comment
 		}
 	`
 	parser = initParser(src)
@@ -134,5 +135,22 @@ func TestParseReturnStmt(t *testing.T) {
 	}
 	for e, r := range Set {
 		assert.Equal(t, e, r)
+	}
+}
+
+func TestNext(t *testing.T) {
+	src := `
+		// Comment 1
+		// Comment 2
+		int a
+		// Comment 3
+		// Comment 4
+		int b
+	`
+	parser := initParser(src)
+	expects := []TokenType{IntType, IdentType, IntType, IdentType}
+	for _, exp := range expects {
+		tok, _ := parser.next()
+		assert.Equal(t, exp, tok.kind)
 	}
 }
