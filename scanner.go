@@ -37,7 +37,7 @@ func (s *Scanner) nextLine() (Token, int) {
 		text += ch
 		ch, err = s.nextCh()
 	}
-	return Token{text, CommentType}, pos
+	return Token{text, COMMENT_SLASH}, pos
 }
 
 func (s *Scanner) next() (Token, int) {
@@ -47,43 +47,43 @@ func (s *Scanner) next() (Token, int) {
 
 	if err != nil && err == io.EOF {
 		s.fullScaned = true
-		return Token{"", EOFType}, pos
+		return Token{"", EOF}, pos
 	}
 
 	text := ""
 	isNum := false
 	switch Kind(ch) {
-	case LETTER:
-		for ch != "\n" && ch != "\t" && ch != Space && err != io.EOF {
-			if ch == LParen || ch == RParen || ch == CommaLit {
+	case LETTER_LIT:
+		for ch != "\n" && ch != "\t" && ch != " " && err != io.EOF {
+			if ch == Keywords[LPAREN] || ch == Keywords[RPAREN] || ch == Keywords[COMMA] {
 				s.undoCh()
 				break
 			}
 			text += ch
 			ch, err = s.nextCh()
 		}
-	case DIGIT:
+	case DIGIT_LIT:
 		isNum = true
-		for ch != Space && err != io.EOF {
+		for ch != " " && err != io.EOF {
 			text += ch
-			if Kind(ch) == LETTER {
+			if Kind(ch) == LETTER_LIT {
 				panic("Invalid variable name: " + text)
 			}
 
 			ch, err = s.nextCh()
-			if kind := Kind(ch); kind != DIGIT && kind != DOT {
+			if kind := Kind(ch); kind != DIGIT_LIT && kind != DOT_LIT {
 				s.undoCh()
 				break
 			}
 		}
-	case COMMA:
+	case COMMA_LIT:
 		text += ch
 	default: // Operator
-		for ch != Space && ch != "\n" && err != io.EOF {
+		for ch != " " && ch != "\n" && err != io.EOF {
 			text += ch
 
 			ch, err = s.nextCh()
-			if Kind(ch) != OTHER {
+			if Kind(ch) != OTHER_LIT {
 				s.undoCh()
 				break
 			}
@@ -133,9 +133,9 @@ func (s *Scanner) skipWhiteSpace() (string, error) {
 func ToToken(token string, num bool) Token {
 	if num {
 		if strings.Contains(token, ".") {
-			return Token{token, DoubleLit}
+			return Token{token, DOUBLE_LIT}
 		} else {
-			return Token{token, IntLit}
+			return Token{token, INT_LIT}
 		}
 	}
 
