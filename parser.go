@@ -329,18 +329,16 @@ func (p *Parser) parseOperand() Expr {
 }
 
 func (p *Parser) next() (Token, int) {
-	tok, _ := p.scanner.peek()
-	// TODO skip all comment
-	if tok.kind == CommentType {
+	var tok Token
+	for tok, _ = p.scanner.peek(); tok.kind == CommentType; tok, _ = p.scanner.peek() {
 		p.scanner.nextLine()
 	}
 	return p.scanner.next()
 }
 
 func (p *Parser) peek() (Token, int) {
-	tok, _ := p.scanner.peek()
-	// TODO skip all comment
-	if tok.kind == CommentType {
+	var tok Token
+	for tok, _ = p.scanner.peek(); tok.kind == CommentType; tok, _ = p.scanner.peek() {
 		p.scanner.nextLine()
 	}
 	return p.scanner.peek()
