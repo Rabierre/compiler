@@ -56,20 +56,23 @@ func (p *Parser) parseDecl() {
 	}
 }
 
-func (p *Parser) parseFunc() {
-	// 1. get function name
+func (p *Parser) parseFunc() Decl {
 	ident := p.parseIdent()
-	// 2. get parameters
+
 	p.expect(LPAREN)
-	// TODO get param as Expr
 	params := p.parseParamList()
 	p.expect(RPAREN)
-	// 3. parse body
-	body := p.parseBody() // parse compound statement
-	// 4. make funcDecl
-	funcDecl := &FuncDecl{Name: ident, Body: body, Params: params}
-	// 5. add to decl
+
+	var _typ Token
+	if tok, _ := p.peek(); tok.kind == INT || tok.kind == DOUBLE {
+		p.next()
+		_typ = tok
+	}
+
+	body := p.parseBody()
+	funcDecl := &FuncDecl{Name: ident, Body: body, Params: params, Type: _typ}
 	p.decls = append(p.decls, funcDecl)
+	return funcDecl
 }
 
 func (p *Parser) parseIdent() Ident {

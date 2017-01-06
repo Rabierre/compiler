@@ -3,7 +3,7 @@ BNF description for LL(>=1) grammars
 ```
 Program ::= DeclList ?
 DeclList ::= ( VarDecl | FunctionDecl ) DeclList ?
-FunctionDecl ::= Type identifier "(" VarDeclList ? ")" CompoundStmt
+FunctionDecl ::= "func" identifier "(" VarDeclList ? ")" Type CompoundStmt
 VarDeclList ::= VarDecl VarDeclList ?
 VarDecl ::= Type IdentList
 IdentList ::= identifier ( "," IdentList ) ?
