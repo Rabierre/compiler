@@ -32,7 +32,8 @@ func TestParseFunction(t *testing.T) {
 				// Comment 3
 			}
 		}
-		func func4(int a, double b) {
+		func func4(int a, double b) int {
+			return a
 		}
 	`
 	parser := initParser(src)

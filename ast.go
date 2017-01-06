@@ -82,8 +82,9 @@ type Decl interface {
 type FuncDecl struct {
 	// TODO Pos
 	Name   Ident
-	Body   *CompoundStmt
+	Type   Token
 	Params *ArgList
+	Body   *CompoundStmt
 }
 
 func (*FuncDecl) declNode()    {}
