@@ -68,6 +68,9 @@ func (p *Parser) parseFunc() Decl {
 	if tok, _ := p.peek(); tok.Kind == token.INT || tok.Kind == token.DOUBLE {
 		p.next()
 		_typ = tok
+	} else {
+		// TODO move to Type
+		_typ = Token{kind: VOID}
 	}
 
 	body := p.parseBody()
