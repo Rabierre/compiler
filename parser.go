@@ -70,7 +70,7 @@ func (p *Parser) parseFunc() Decl {
 		_typ = tok
 	} else {
 		// TODO move to Type
-		_typ = Token{kind: VOID}
+		_typ = token.Token{Kind: token.VOID}
 	}
 
 	body := p.parseBody()
@@ -87,7 +87,7 @@ func (p *Parser) parseIdent() Ident {
 		p.next()
 	}
 	// TODO else error
-	return Ident{Pos: pos, Name: tok.val}
+	return Ident{Pos: pos, Name: tok.Val}
 }
 
 func (p *Parser) parseParamList() *ArgList {
@@ -108,7 +108,7 @@ func (p *Parser) parseParam() Arg {
 	tok, pos := p.next()
 	arg := Arg{Pos: pos, Type: tok}
 	tok, pos = p.next()
-	arg.Name = Ident{Pos: pos, Name: tok.val}
+	arg.Name = Ident{Pos: pos, Name: tok.Val}
 	return arg
 }
 
@@ -200,7 +200,7 @@ func (p *Parser) parseExprStmt() Stmt {
 	// a = 10
 	x := p.parseExpr()
 	tok, _ := p.peek()
-	if tok.kind == ASSIGN {
+	if tok.Kind == token.ASSIGN {
 		p.next()
 		y := p.parseExpr()
 		x = &AssignExpr{Pos: x.(*Ident).Pos, LValue: x, RValue: y}
