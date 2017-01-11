@@ -9,6 +9,7 @@ import (
 const debug = true
 
 type Parser struct {
+	scope    *Scope
 	topScope *Scope
 	scanner  *Scanner
 
@@ -26,6 +27,7 @@ func (p *Parser) Init(src []byte) {
 	p.scanner.src = src
 	p.comments = &CommentList{}
 	p.OpenScope() // Top scope
+	p.topScope = p.scope
 }
 
 func (p *Parser) Parse() {
@@ -75,6 +77,13 @@ func (p *Parser) parseFunc() Decl {
 
 	// TODO move this to specific function like parse function decl only
 	p.decls = append(p.decls, funcDecl)
+
+	// TODO generalize this
+	// p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
+	obj := &Object{decl: funcDecl, kind: FUNC}
+	// all functions should have name
+	p.topScope.Insert(obj)
+
 	return funcDecl
 }
 
@@ -124,10 +133,10 @@ func (p *Parser) parseBody() *CompoundStmt {
 }
 
 func (p *Parser) parseCompoundStmt() *CompoundStmt {
-	// TODO open scope
 	lbrace := p.expect(token.LBRACE)
+	p.OpenScope()
 	list := p.parseStmtList()
-	// TODO close scope
+	p.CloseScope()
 	rbrace := p.expect(token.RBRACE)
 	return &CompoundStmt{
 		LBracePos: lbrace,
@@ -186,9 +195,15 @@ func (p *Parser) parseVarDecl() Stmt {
 		value = p.parseExpr()
 	}
 
-	// TODO resolve with scope
+	decl := &VarDeclStmt{Pos: pos, Type: typ, Name: ident, RValue: value}
 
-	return &VarDeclStmt{Pos: pos, Type: typ, Name: ident, RValue: value}
+	// TODO generalize this
+	obj := &Object{decl: decl, kind: VAR}
+	p.scope.Insert(obj)
+
+	// TODO resolve in scope
+
+	return decl
 }
 
 func (p *Parser) parseForStmt() Stmt {
@@ -352,11 +367,11 @@ func (p *Parser) expect(expected token.Type) int {
 }
 
 func (p *Parser) OpenScope() {
-	p.topScope = &Scope{p.topScope, []*Object{}}
+	p.scope = &Scope{p.scope, []*Object{}}
 }
 
 func (p *Parser) CloseScope() {
-	p.topScope = p.topScope.outer
+	p.scope = p.scope.outer
 }
 
 func (p *Parser) parseComment() {

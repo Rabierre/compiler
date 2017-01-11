@@ -179,7 +179,14 @@ func (s *Scope) Insert(obj *Object) {
 	s.Objects = append(s.Objects, obj)
 }
 
+type ObjectType int
+
+const (
+	FUNC = iota
+	VAR
+)
+
 type Object struct {
-	// TODO Has Type
+	kind ObjectType
 	decl interface{}
 }
