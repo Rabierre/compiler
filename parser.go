@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/rabierre/compiler/token"
 )
 
 const debug = true
@@ -30,10 +32,10 @@ func (p *Parser) Parse() {
 	p.OpenScope()
 
 	for !p.scanner.fullScaned {
-		token, _ := p.scanner.peek()
-		println("parse: ", token.val, token.kind.String())
-		switch token.kind {
-		case COMMENT_SLASH:
+		// TODO use p.peek() after move parsecomment phase to scanner
+		tok, _ := p.scanner.peek()
+		switch tok.Kind {
+		case token.COMMENT:
 			// TODO move to scanner
 			p.parseComment()
 		default:
@@ -45,13 +47,12 @@ func (p *Parser) Parse() {
 }
 
 func (p *Parser) parseDecl() {
-	tok, _ := p.scanner.next()
-	println("parse decl: ", tok.val, tok.kind.String())
-	switch tok.kind {
+	tok, _ := p.next()
+	switch tok.Kind {
 	// By spec for now, no global variable, no imports are available.
 	// Function is top scope
 	//
-	case FUNC:
+	case token.FUNC:
 		p.parseFunc()
 	}
 }
@@ -59,25 +60,27 @@ func (p *Parser) parseDecl() {
 func (p *Parser) parseFunc() Decl {
 	ident := p.parseIdent()
 
-	p.expect(LPAREN)
+	p.expect(token.LPAREN)
 	params := p.parseParamList()
-	p.expect(RPAREN)
+	p.expect(token.RPAREN)
 
-	var _typ Token
-	if tok, _ := p.peek(); tok.kind == INT || tok.kind == DOUBLE {
+	var _typ token.Token
+	if tok, _ := p.peek(); tok.Kind == token.INT || tok.Kind == token.DOUBLE {
 		p.next()
 		_typ = tok
 	}
 
 	body := p.parseBody()
 	funcDecl := &FuncDecl{Name: ident, Body: body, Params: params, Type: _typ}
+
+	// TODO move this to specific function like parse function decl only
 	p.decls = append(p.decls, funcDecl)
 	return funcDecl
 }
 
 func (p *Parser) parseIdent() Ident {
 	tok, pos := p.peek()
-	if tok.kind == IDENT {
+	if tok.Kind == token.IDENT {
 		p.next()
 	}
 	// TODO else error
@@ -87,10 +90,10 @@ func (p *Parser) parseIdent() Ident {
 func (p *Parser) parseParamList() *ArgList {
 	list := []Arg{}
 
-	for tok, _ := p.peek(); tok.kind == INT || tok.kind == DOUBLE; {
+	for tok, _ := p.peek(); tok.Kind == token.INT || tok.Kind == token.DOUBLE; {
 		list = append(list, p.parseParam())
 
-		if tok, _ := p.peek(); tok.kind != COMMENT_SLASH && tok.kind == RPAREN {
+		if tok, _ := p.peek(); tok.Kind != token.COMMENT && tok.Kind == token.RPAREN {
 			break
 		}
 		p.next()
@@ -107,11 +110,11 @@ func (p *Parser) parseParam() Arg {
 }
 
 func (p *Parser) parseBody() *CompoundStmt {
-	lbrace := p.expect(LBRACE)
+	lbrace := p.expect(token.LBRACE)
 	// TODO open scope
 	list := p.parseStmtList()
 	// TODO close scope
-	rbrace := p.expect(RBRACE)
+	rbrace := p.expect(token.RBRACE)
 
 	return &CompoundStmt{
 		LBracePos: lbrace,
@@ -121,11 +124,11 @@ func (p *Parser) parseBody() *CompoundStmt {
 }
 
 func (p *Parser) parseCompoundStmt() *CompoundStmt {
-	lbrace := p.expect(LBRACE)
 	// TODO open scope
+	lbrace := p.expect(token.LBRACE)
 	list := p.parseStmtList()
 	// TODO close scope
-	rbrace := p.expect(RBRACE)
+	rbrace := p.expect(token.RBRACE)
 	return &CompoundStmt{
 		LBracePos: lbrace,
 		RBracePos: rbrace,
@@ -136,9 +139,8 @@ func (p *Parser) parseCompoundStmt() *CompoundStmt {
 func (p *Parser) parseStmtList() []Stmt {
 	list := []Stmt{}
 	for {
-		token, _ := p.peek()
-		println("parseStmtList: ", token.val, token.kind.String())
-		if token.kind == RBRACE || token.kind == EOF {
+		tok, _ := p.peek()
+		if tok.Kind == token.RBRACE || tok.Kind == token.EOF {
 			break
 		}
 		list = append(list, p.parseStmt())
@@ -147,22 +149,20 @@ func (p *Parser) parseStmtList() []Stmt {
 }
 
 func (p *Parser) parseStmt() Stmt {
-	token, pos := p.peek()
-	fmt.Printf("parseStmt: %s, %s\n", token.val, token.kind.String())
+	tok, pos := p.peek()
 
-	switch token.kind {
-	case INT, DOUBLE:
+	switch tok.Kind {
+	case token.INT, token.DOUBLE:
 		return p.parseVarDecl()
-	case FOR:
+	case token.FOR:
 		return p.parseForStmt()
-	case IF:
+	case token.IF:
 		return p.parseIfStmt()
-	case RETURN:
-		// "return" Expr ?
+	case token.RETURN:
 		return p.parseReturnStmt()
-	case LBRACE:
+	case token.LBRACE:
 		return p.parseCompoundStmt()
-	case RBRACE:
+	case token.RBRACE:
 		return &EmptyStmt{ /*position for semicolon if need*/ }
 	default:
 		p.next()
@@ -171,17 +171,17 @@ func (p *Parser) parseStmt() Stmt {
 	return &BadStmt{From: pos}
 }
 
+// parse variable declaration
+// int a = 1
+// double b = 1.0
+// int c
+//
 func (p *Parser) parseVarDecl() Stmt {
 	typ, pos := p.next()
-	fmt.Printf("parseVarDecl: %s, %s\n", typ.val, typ.kind.String())
 
-	// int a = 1
-	// double b = 1.0
-	// int c
 	ident := p.parseIdent()
 	var value Expr
-	tok, pos := p.peek()
-	if tok.kind == ASSIGN {
+	if tok, _ := p.peek(); tok.Kind == token.ASSIGN {
 		p.next()
 		value = p.parseExpr()
 	}
@@ -195,16 +195,16 @@ func (p *Parser) parseForStmt() Stmt {
 	_, pos := p.next()
 
 	// 1. get initial status
-	p.expect(LPAREN)
+	p.expect(token.LPAREN)
 	// init := &EmptyStmt{}
 	init := p.parseStmt()
-	p.expect(SEMI_COLON)
+	p.expect(token.SEMI_COLON)
 	// 2. get condition
 	cond := p.parseExpr()
-	p.expect(SEMI_COLON)
+	p.expect(token.SEMI_COLON)
 	// 3. get post stmt
 	post := p.parseExpr()
-	p.expect(RPAREN)
+	p.expect(token.RPAREN)
 
 	// 4. parse body
 	body := p.parseBody()
@@ -216,14 +216,14 @@ func (p *Parser) parseForStmt() Stmt {
 func (p *Parser) parseIfStmt() Stmt {
 	_, pos := p.next()
 
-	p.expect(LPAREN)
+	p.expect(token.LPAREN)
 	cond := p.parseExpr() // TODO: If cond is nil, error
-	p.expect(RPAREN)
+	p.expect(token.RPAREN)
 
 	body := p.parseBody()
 
 	var elseBody Stmt
-	if tok, _ := p.peek(); tok.kind == ELSE {
+	if tok, _ := p.peek(); tok.Kind == token.ELSE {
 		p.next()
 		elseBody = p.parseBody()
 	}
@@ -234,7 +234,7 @@ func (p *Parser) parseReturnStmt() Stmt {
 	_, pos := p.next()
 
 	var expr Expr
-	if tok, _ := p.peek(); tok.kind != EOF && tok.kind != RBRACE {
+	if tok, _ := p.peek(); tok.Kind != token.EOF && tok.Kind != token.RBRACE {
 		expr = p.parseExpr()
 	}
 
@@ -242,7 +242,7 @@ func (p *Parser) parseReturnStmt() Stmt {
 }
 
 func (p *Parser) parseExpr() Expr {
-	return p.parseBinaryExpr(LowestPriority + 1)
+	return p.parseBinaryExpr(token.LowestPriority + 1)
 }
 
 func (p *Parser) parseExprList() *ExprList {
@@ -252,7 +252,7 @@ func (p *Parser) parseExprList() *ExprList {
 		exprs = append(exprs, p.parseExpr())
 		// 2. if next token is COMMA then continue
 		// 2-1. else return
-		if tok, _ := p.peek(); tok.kind != COMMA {
+		if tok, _ := p.peek(); tok.Kind != token.COMMA {
 			break
 		}
 		p.next()
@@ -260,9 +260,8 @@ func (p *Parser) parseExprList() *ExprList {
 	return &ExprList{List: exprs}
 }
 
-// parse Term
+// Term
 func (p *Parser) parseBinaryExpr(prio int) Expr {
-	// indetifier op expr
 	x := p.parseUnaryExpr()
 	for {
 		tok, _ := p.peek()
@@ -280,15 +279,15 @@ func (p *Parser) parseBinaryExpr(prio int) Expr {
 	}
 }
 
-// parse Factor
+// Factor
 func (p *Parser) parseUnaryExpr() Expr {
 	// Factor ::= "(" Expr ")"
 	//         | AddSub Factor
 	//         | number
 	//         | string
 	tok, _ := p.peek()
-	switch tok.kind {
-	case PLUS, MINUS:
+	switch tok.Kind {
+	case token.PLUS, token.MINUS:
 		op, pos := p.next()
 		x := p.parseUnaryExpr()
 		return &UnaryExpr{Pos: pos, Op: op, RValue: x}
@@ -297,16 +296,18 @@ func (p *Parser) parseUnaryExpr() Expr {
 	return p.parsePrimaryExpr()
 }
 
+// Parse function call or variable reference
+// identifier "(" ExprList ? ")"
+// identifier
+//
 func (p *Parser) parsePrimaryExpr() Expr {
-	// identifier "(" ExprList ? ")"
-	// identifier
 	x := p.parseOperand()
 	tok, _ := p.peek()
-	switch tok.kind {
-	case LPAREN:
-		lparen := p.expect(LPAREN)
+	switch tok.Kind {
+	case token.LPAREN:
+		lparen := p.expect(token.LPAREN)
 		params := p.parseExprList()
-		rparen := p.expect(RPAREN)
+		rparen := p.expect(token.RPAREN)
 		return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
 	}
 	return x
@@ -314,43 +315,38 @@ func (p *Parser) parsePrimaryExpr() Expr {
 
 func (p *Parser) parseOperand() Expr {
 	tok, pos := p.peek()
-	switch tok.kind {
-	case IDENT:
+	switch tok.Kind {
+	case token.IDENT:
 		x := p.parseIdent()
-		// TODO check x is declared in this scope
+		// TODO Resolve identity in scope
 		return &x
-	case INT_LIT, DOUBLE_LIT, TRUE, FALSE:
+	case token.INT_LIT, token.DOUBLE_LIT, token.TRUE, token.FALSE:
 		p.next()
-		return &BasicLit{Pos: pos, Value: tok.val, Type: tok.kind}
+		return &BasicLit{Pos: pos, Value: tok.Val, Type: tok.Kind}
 	}
-
-	// TODO resolve ident is what type of identifier
-	// function, variable,,
 
 	_, to := p.peek()
 	return &BadExpr{From: pos, To: to}
 }
 
-func (p *Parser) next() (Token, int) {
-	var tok Token
-	for tok, _ = p.scanner.peek(); tok.kind == COMMENT_SLASH; tok, _ = p.scanner.peek() {
+func (p *Parser) next() (token.Token, int) {
+	for tok, _ := p.scanner.peek(); tok.Kind == token.COMMENT; tok, _ = p.scanner.peek() {
 		p.scanner.nextLine()
 	}
 	return p.scanner.next()
 }
 
-func (p *Parser) peek() (Token, int) {
-	var tok Token
-	for tok, _ = p.scanner.peek(); tok.kind == COMMENT_SLASH; tok, _ = p.scanner.peek() {
+func (p *Parser) peek() (token.Token, int) {
+	for tok, _ := p.scanner.peek(); tok.Kind == token.COMMENT; tok, _ = p.scanner.peek() {
 		p.scanner.nextLine()
 	}
 	return p.scanner.peek()
 }
 
-func (p *Parser) expect(expected TokenType) int {
+func (p *Parser) expect(expected token.Type) int {
 	tok, pos := p.next()
-	if tok.kind != expected {
-		panic("Expected: " + expected.String() + ", found: " + tok.val + " " + tok.kind.String())
+	if tok.Kind != expected {
+		panic("Expected: " + expected.String() + ", found: " + tok.Val + " " + tok.Kind.String())
 	}
 	return pos
 }
@@ -366,7 +362,7 @@ func (p *Parser) CloseScope() {
 func (p *Parser) parseComment() {
 	token, pos := p.scanner.nextLine()
 
-	comment := &Comment{pos, token.val}
+	comment := &Comment{pos, token.Val}
 	p.comments.Insert(comment)
 
 	if debug {

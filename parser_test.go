@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/rabierre/compiler/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,9 +42,9 @@ func TestParseFunction(t *testing.T) {
 
 	assert.NotNil(t, parser.topScope)
 	assert.Equal(t, 4, len(parser.decls))
-	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name.val)
+	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name.Val)
 	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
-	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name.val)
+	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name.Val)
 	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
 }
 
@@ -76,9 +77,9 @@ func TestParseIfStmt(t *testing.T) {
 	assert.NotNil(t, stmt.(*IfStmt).ElseBody)
 
 	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
-	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: INT_LIT}, cond.LValue))
-	assert.True(t, DeepEqual(Token{val: "==", kind: EQ}, cond.Op))
-	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: INT_LIT}, cond.RValue))
+	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: token.INT_LIT}, cond.LValue))
+	assert.True(t, DeepEqual(token.Token{"==", token.EQ}, cond.Op))
+	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: token.INT_LIT}, cond.RValue))
 
 	src = `if (1 == 2) {
 			// Comment
@@ -103,7 +104,7 @@ func TestParseVarDecl(t *testing.T) {
 	stmt := parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl := stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.val)
+	assert.Equal(t, "a", varDecl.Name.Name.Val)
 	assert.Equal(t, "10", varDecl.RValue.(*BasicLit).Value)
 
 	src = `int a = funcCall(b,c)`
@@ -111,8 +112,8 @@ func TestParseVarDecl(t *testing.T) {
 	stmt = parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl = stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.val)
-	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.val)
+	assert.Equal(t, "a", varDecl.Name.Name.Val)
+	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.Val)
 }
 
 func TestParseReturnStmt(t *testing.T) {
@@ -129,10 +130,10 @@ func TestParseReturnStmt(t *testing.T) {
 	assert.NotNil(t, stmt.(*ReturnStmt).Value)
 	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
 	assert.Equal(t, 3, len(params))
-	Set := map[TokenType]TokenType{
-		IDENT:   params[0].(*Ident).Name.kind,
-		INT_LIT: params[1].(*BasicLit).Type,
-		TRUE:    params[2].(*BasicLit).Type,
+	Set := map[token.Type]token.Type{
+		token.IDENT:   params[0].(*Ident).Name.Kind,
+		token.INT_LIT: params[1].(*BasicLit).Type,
+		token.TRUE:    params[2].(*BasicLit).Type,
 	}
 	for e, r := range Set {
 		assert.Equal(t, e, r)
@@ -149,9 +150,9 @@ func TestNext(t *testing.T) {
 		int b
 	`
 	parser := initParser(src)
-	expects := []TokenType{INT, IDENT, INT, IDENT}
+	expects := []token.Type{token.INT, token.IDENT, token.INT, token.IDENT}
 	for _, exp := range expects {
 		tok, _ := parser.next()
-		assert.Equal(t, exp, tok.kind)
+		assert.Equal(t, exp, tok.Kind)
 	}
 }

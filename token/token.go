@@ -1,31 +1,38 @@
-package main
+package token
 
 import (
 	"strconv"
 )
 
-type TokenType int
+type Type int
 
 type Token struct {
-	val  string
-	kind TokenType
+	Val  string
+	Kind Type
 }
 
 const (
-	BEGIN TokenType = iota
+	BEGIN Type = iota
 
 	IF
 	ELSE
 	FOR
 	FUNC
+	INT
+	DOUBLE
+	RETURN
+	TRUE
+	FALSE
+
 	LPAREN
 	RPAREN
 	LBRACE
 	RBRACE
-	INT
-	DOUBLE
-	INT_LIT
-	DOUBLE_LIT
+
+	COMMENT
+	SEMI_COLON
+	COMMA
+
 	PLUS
 	MINUS
 	MULTI
@@ -37,30 +44,28 @@ const (
 	GEQ
 	EQ
 	NEQ
-	IDENT
-	COMMENT_SLASH
-	RETURN
-	SEMI_COLON
-	COMMA
-	TRUE
-	FALSE
+
 	SPACE
+	VOID
 
 	END
 
+	INT_LIT
+	DOUBLE_LIT
+	IDENT
 	EOF
 )
 
-var Tokens map[string]TokenType
+var Tokens map[string]Type
 
 func init() {
-	Tokens = make(map[string]TokenType)
+	Tokens = make(map[string]Type)
 	for i := BEGIN + 1; i < END; i++ {
 		Tokens[Keywords[i]] = i
 	}
 }
 
-func KeywordType(token string) TokenType {
+func KeywordType(token string) Type {
 	typ, exist := Tokens[token]
 	if exist {
 		return typ
@@ -68,9 +73,9 @@ func KeywordType(token string) TokenType {
 	return IDENT
 }
 
-func (t TokenType) String() string {
+func (t Type) String() string {
 	s := ""
-	if 0 <= t && t < TokenType(len(Keywords)) {
+	if 0 <= t && t < Type(len(Keywords)) {
 		s = Keywords[t]
 	}
 	if s == "" {
@@ -132,7 +137,7 @@ const (
 )
 
 func (t Token) Priority() int {
-	switch t.kind {
+	switch t.Kind {
 	// case LOR:
 	// 	return 1
 	// case LAND:
@@ -163,9 +168,9 @@ var Keywords = [...]string{
 	LBRACE: "{",
 	RBRACE: "}",
 
-	COMMENT_SLASH: "//",
-	SEMI_COLON:    ";",
-	COMMA:         ",",
+	COMMENT:    "//",
+	SEMI_COLON: ";",
+	COMMA:      ",",
 
 	PLUS:   "+",
 	MINUS:  "-",

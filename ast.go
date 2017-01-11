@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/rabierre/compiler/token"
+)
+
 type Node interface {
 }
 
@@ -18,7 +22,7 @@ type ExprList struct {
 type BasicLit struct {
 	Pos   int
 	Value string
-	Type  TokenType
+	Type  token.Type
 }
 
 // Term
@@ -26,19 +30,19 @@ type BinaryExpr struct {
 	Pos    int
 	LValue Expr
 	RValue Expr
-	Op     Token
+	Op     token.Token
 }
 
 // Factor
 type UnaryExpr struct {
 	Pos    int
-	Op     Token
+	Op     token.Token
 	RValue Expr
 }
 
 type Ident struct {
 	Pos  int
-	Name Token
+	Name token.Token
 }
 
 type CallExpr struct {
@@ -50,7 +54,7 @@ type CallExpr struct {
 
 type Arg struct {
 	Pos  int
-	Type Token
+	Type token.Token
 	Name Ident
 }
 
@@ -82,7 +86,7 @@ type Decl interface {
 type FuncDecl struct {
 	// TODO Pos
 	Name   Ident
-	Type   Token
+	Type   token.Token
 	Params *ArgList
 	Body   *CompoundStmt
 }
@@ -122,7 +126,7 @@ type ForStmt struct {
 
 type VarDeclStmt struct {
 	Pos    int
-	Type   Token
+	Type   token.Token
 	Name   Ident
 	RValue Expr
 }
