@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rabierre/compiler/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,27 +33,27 @@ func TestNextCh(t *testing.T) {
 
 type Suite struct {
 	src    string
-	tokens []TokenType
+	tokens []token.Type
 }
 
 func SuiteCase() []*Suite {
 	return []*Suite{
-		&Suite{"func main(int a, double b) {}", []TokenType{FUNC, IDENT, LPAREN, INT, IDENT, COMMA, DOUBLE, IDENT, RPAREN, LBRACE, RBRACE, EOF}},
+		&Suite{"func main(int a, double b) {}", []token.Type{token.FUNC, token.IDENT, token.LPAREN, token.INT, token.IDENT, token.COMMA, token.DOUBLE, token.IDENT, token.RPAREN, token.LBRACE, token.RBRACE, token.EOF}},
 		&Suite{`for (;;) {
 	 		}
-	 	`, []TokenType{FOR, LPAREN, SEMI_COLON, SEMI_COLON, RPAREN, LBRACE, RBRACE, EOF}},
+	 	`, []token.Type{token.FOR, token.LPAREN, token.SEMI_COLON, token.SEMI_COLON, token.RPAREN, token.LBRACE, token.RBRACE, token.EOF}},
 		&Suite{`if (1 == 2) {
 				// comment
 			} else {
 				// comment
 			}
-		`, []TokenType{IF, LPAREN, INT_LIT, EQ, INT_LIT, RPAREN, LBRACE, COMMENT_SLASH, IDENT, RBRACE, ELSE, LBRACE, COMMENT_SLASH, IDENT, RBRACE, EOF}},
+		`, []token.Type{token.IF, token.LPAREN, token.INT_LIT, token.EQ, token.INT_LIT, token.RPAREN, token.LBRACE, token.COMMENT, token.IDENT, token.RBRACE, token.ELSE, token.LBRACE, token.COMMENT, token.IDENT, token.RBRACE, token.EOF}},
 		&Suite{`func func3() {
 					for(int i = 0; i < 10; i++) {
 					// Comment
 				}
 			}
-		`, []TokenType{FUNC, IDENT, LPAREN, RPAREN, LBRACE, FOR, LPAREN, INT, IDENT, ASSIGN, INT_LIT, SEMI_COLON, IDENT, LESS, INT_LIT, SEMI_COLON, IDENT, RPAREN, LBRACE, COMMENT_SLASH, IDENT, RBRACE, RBRACE, EOF}},
+		`, []token.Type{token.FUNC, token.IDENT, token.LPAREN, token.RPAREN, token.LBRACE, token.FOR, token.LPAREN, token.INT, token.IDENT, token.ASSIGN, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.LESS, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.RPAREN, token.LBRACE, token.COMMENT, token.IDENT, token.RBRACE, token.RBRACE, token.EOF}},
 	}
 }
 
@@ -61,7 +62,7 @@ func TestScan(t *testing.T) {
 		scanner := initScanner(suite.src)
 		for i := 0; !scanner.fullScaned; i++ {
 			tok, _ := scanner.next()
-			assert.Equal(t, suite.tokens[i], tok.kind)
+			assert.Equal(t, suite.tokens[i], tok.Kind)
 		}
 	}
 }

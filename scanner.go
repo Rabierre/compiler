@@ -3,12 +3,14 @@ package main
 import (
 	"io"
 	"strings"
+
+	"github.com/rabierre/compiler/token"
 )
 
 type Scanner struct {
 	src        []byte
 	srcIndex   int
-	tokens     []Token
+	tokens     []token.Token
 	tokenIndex int
 	fullScaned bool
 }
@@ -17,7 +19,7 @@ func (s *Scanner) Init() {
 	s.srcIndex = -1
 }
 
-func (s *Scanner) peek() (Token, int) {
+func (s *Scanner) peek() (token.Token, int) {
 	index := s.srcIndex
 	tok, pos := s.next()
 	s.srcIndex = index
@@ -25,7 +27,7 @@ func (s *Scanner) peek() (Token, int) {
 }
 
 // For comment
-func (s *Scanner) nextLine() (Token, int) {
+func (s *Scanner) nextLine() (token.Token, int) {
 	text := ""
 	pos := s.srcIndex
 	if pos < 0 {
@@ -37,53 +39,55 @@ func (s *Scanner) nextLine() (Token, int) {
 		text += ch
 		ch, err = s.nextCh()
 	}
-	return Token{text, COMMENT_SLASH}, pos
+	return token.Token{text, token.COMMENT}, pos
 }
 
-func (s *Scanner) next() (Token, int) {
+func (s *Scanner) next() (token.Token, int) {
 	ch, err := s.skipWhiteSpace()
 
 	pos := s.srcIndex
 
 	if err != nil && err == io.EOF {
 		s.fullScaned = true
-		return Token{"", EOF}, pos
+		return token.Token{"", token.EOF}, pos
 	}
 
 	text := ""
 	isNum := false
-	switch Kind(ch) {
-	case LETTER_LIT:
+	switch token.Kind(ch) {
+	case token.LETTER_LIT:
 		for ch != "\n" && ch != "\t" && ch != " " && err != io.EOF {
-			if ch == Keywords[LPAREN] || ch == Keywords[RPAREN] || ch == Keywords[COMMA] {
+			if ch == token.Keywords[token.LPAREN] ||
+				ch == token.Keywords[token.RPAREN] ||
+				ch == token.Keywords[token.COMMA] {
 				s.undoCh()
 				break
 			}
 			text += ch
 			ch, err = s.nextCh()
 		}
-	case DIGIT_LIT:
+	case token.DIGIT_LIT:
 		isNum = true
 		for ch != " " && err != io.EOF {
 			text += ch
-			if Kind(ch) == LETTER_LIT {
+			if token.Kind(ch) == token.LETTER_LIT {
 				panic("Invalid variable name: " + text)
 			}
 
 			ch, err = s.nextCh()
-			if kind := Kind(ch); kind != DIGIT_LIT && kind != DOT_LIT {
+			if kind := token.Kind(ch); kind != token.DIGIT_LIT && kind != token.DOT_LIT {
 				s.undoCh()
 				break
 			}
 		}
-	case COMMA_LIT:
+	case token.COMMA_LIT:
 		text += ch
 	default: // Operator
 		for ch != " " && ch != "\n" && err != io.EOF {
 			text += ch
 
 			ch, err = s.nextCh()
-			if Kind(ch) != OTHER_LIT {
+			if token.Kind(ch) != token.OTHER_LIT {
 				s.undoCh()
 				break
 			}
@@ -130,15 +134,15 @@ func (s *Scanner) skipWhiteSpace() (string, error) {
 	return ch, err
 }
 
-func ToToken(token string, num bool) Token {
+func ToToken(keyword string, num bool) token.Token {
 	if num {
-		if strings.Contains(token, ".") {
-			return Token{token, DOUBLE_LIT}
+		if strings.Contains(keyword, ".") {
+			return token.Token{keyword, token.DOUBLE_LIT}
 		} else {
-			return Token{token, INT_LIT}
+			return token.Token{keyword, token.INT_LIT}
 		}
 	}
 
-	kind := KeywordType(token)
-	return Token{token, kind}
+	kind := token.KeywordType(keyword)
+	return token.Token{keyword, kind}
 }
