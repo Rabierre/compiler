@@ -17,7 +17,7 @@ func Compile(src []byte) {
 		fn := decl.(*FuncDecl)
 		emitType(fn.Type)
 		buf.WriteByte(' ')
-		buf.WriteString(fn.Name.Name.val)
+		buf.WriteString(fn.Name.Name)
 
 		emitParams(fn.Params)
 		emitBody(fn.Body)
@@ -60,7 +60,7 @@ func emitType( /*Don't handle ast directly*/ typ Token) {
 func emitParams( /*Don't handle ast directly*/ params *ArgList) {
 	buf.WriteString("(")
 	for i := 0; i < len(params.List); i++ {
-		buf.WriteString(params.List[i].Name.Name.val)
+		buf.WriteString(params.List[i].Name.Name)
 		if i < len(params.List)-1 {
 			buf.WriteString(", ")
 		}

@@ -42,9 +42,9 @@ func TestParseFunction(t *testing.T) {
 
 	assert.NotNil(t, parser.topScope)
 	assert.Equal(t, 4, len(parser.decls))
-	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name.Val)
+	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name)
 	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
-	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name.Val)
+	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name)
 	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
 }
 
@@ -104,7 +104,7 @@ func TestParseVarDecl(t *testing.T) {
 	stmt := parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl := stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.Val)
+	assert.Equal(t, "a", varDecl.Name.Name)
 	assert.Equal(t, "10", varDecl.RValue.(*BasicLit).Value)
 
 	src = `int a = funcCall(b,c)`
@@ -112,8 +112,8 @@ func TestParseVarDecl(t *testing.T) {
 	stmt = parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl = stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.Val)
-	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.Val)
+	assert.Equal(t, "a", varDecl.Name.Name)
+	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name)
 }
 
 func TestParseReturnStmt(t *testing.T) {

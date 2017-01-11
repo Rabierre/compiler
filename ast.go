@@ -42,7 +42,7 @@ type UnaryExpr struct {
 
 type Ident struct {
 	Pos  int
-	Name token.Token
+	Name string
 }
 
 type CallExpr struct {

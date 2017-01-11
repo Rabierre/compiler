@@ -87,7 +87,7 @@ func (p *Parser) parseIdent() Ident {
 		p.next()
 	}
 	// TODO else error
-	return Ident{Name: tok, Pos: pos}
+	return Ident{Pos: pos, Name: tok.val}
 }
 
 func (p *Parser) parseParamList() *ArgList {
@@ -108,7 +108,7 @@ func (p *Parser) parseParam() Arg {
 	tok, pos := p.next()
 	arg := Arg{Pos: pos, Type: tok}
 	tok, pos = p.next()
-	arg.Name = Ident{Pos: pos, Name: tok}
+	arg.Name = Ident{Pos: pos, Name: tok.val}
 	return arg
 }
 
