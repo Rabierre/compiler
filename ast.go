@@ -52,6 +52,13 @@ type CallExpr struct {
 	RParenPos int
 }
 
+type AssignExpr struct {
+	Pos    int
+	LValue Expr
+	RValue Expr
+}
+
+// TODO vardecl?
 type Arg struct {
 	Pos  int
 	Type token.Token
@@ -72,6 +79,7 @@ func (*Ident) exprNode()      {}
 func (*BinaryExpr) exprNode() {}
 func (*UnaryExpr) exprNode()  {}
 func (*CallExpr) exprNode()   {}
+func (*AssignExpr) exprNode() {}
 func (*Arg) exprNode()        {}
 func (*BadExpr) exprNode()    {}
 
@@ -136,6 +144,10 @@ type ReturnStmt struct {
 	Value Expr
 }
 
+type ExprStmt struct {
+	expr Expr
+}
+
 type EmptyStmt struct {
 }
 
@@ -148,6 +160,7 @@ func (*ForStmt) stmtNode()      {}
 func (*IfStmt) stmtNode()       {}
 func (*VarDeclStmt) stmtNode()  {}
 func (*ReturnStmt) stmtNode()   {}
+func (*ExprStmt) stmtNode()     {}
 func (*EmptyStmt) stmtNode()    {}
 func (*BadStmt) stmtNode()      {}
 

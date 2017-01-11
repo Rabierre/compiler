@@ -129,15 +129,27 @@ func TestParseReturnStmt(t *testing.T) {
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*ReturnStmt).Value)
 	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
+
 	assert.Equal(t, 3, len(params))
-	Set := map[token.Type]token.Type{
-		token.IDENT:   params[0].(*Ident).Name.Kind,
-		token.INT_LIT: params[1].(*BasicLit).Type,
-		token.TRUE:    params[2].(*BasicLit).Type,
+	set := [][]string{
+		{"*main.Ident", reflect.TypeOf(params[0]).String()},
+		{"*main.BasicLit", reflect.TypeOf(params[1]).String()},
+		{"*main.BasicLit", reflect.TypeOf(params[2]).String()},
 	}
-	for e, r := range Set {
-		assert.Equal(t, e, r)
+	for _, s := range set {
+		assert.Equal(t, s[0], s[1])
 	}
+}
+
+func TestParseExprStmt(t *testing.T) {
+	src := `
+		a = 10
+	`
+	parser := initParser(src)
+	stmt := parser.parseExprStmt()
+	e := stmt.(*ExprStmt).expr.(*AssignExpr)
+	assert.Equal(t, "a", e.LValue.(*Ident).Name)
+	assert.Equal(t, "10", e.RValue.(*BasicLit).Value)
 }
 
 func TestNext(t *testing.T) {

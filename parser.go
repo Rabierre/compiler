@@ -157,6 +157,8 @@ func (p *Parser) parseStmt() Stmt {
 	switch tok.Kind {
 	case token.INT, token.DOUBLE:
 		return p.parseVarDecl()
+	case token.IDENT:
+		return p.parseExprStmt()
 	case token.FOR:
 		return p.parseForStmt()
 	case token.IF:
@@ -192,6 +194,18 @@ func (p *Parser) parseVarDecl() Stmt {
 	// TODO resolve with scope
 
 	return &VarDeclStmt{Pos: pos, Type: typ, Name: ident, RValue: value}
+}
+
+func (p *Parser) parseExprStmt() Stmt {
+	// a = 10
+	x := p.parseExpr()
+	tok, _ := p.peek()
+	if tok.kind == ASSIGN {
+		p.next()
+		y := p.parseExpr()
+		x = &AssignExpr{Pos: x.(*Ident).Pos, LValue: x, RValue: y}
+	}
+	return &ExprStmt{expr: x}
 }
 
 func (p *Parser) parseForStmt() Stmt {
