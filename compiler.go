@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/rabierre/compiler/token"
 )
@@ -25,7 +26,7 @@ func Compile(src []byte) {
 		emitBody(fn.Body)
 	}
 
-	fmt.Print(buf.String())
+	ioutil.WriteFile("mid.a", buf.Bytes(), 0777)
 }
 
 func emitBody( /*Don't handle ast directly*/ stnt Stmt) {
