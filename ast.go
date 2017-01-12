@@ -93,7 +93,7 @@ type Decl interface {
 
 type FuncDecl struct {
 	// TODO Pos
-	Name   Ident
+	Name   *Ident
 	Type   token.Token
 	Params *ArgList
 	Body   *CompoundStmt
@@ -135,7 +135,7 @@ type ForStmt struct {
 type VarDeclStmt struct {
 	Pos    int
 	Type   token.Token
-	Name   Ident
+	Name   *Ident
 	RValue Expr
 }
 
@@ -185,14 +185,25 @@ type Comment struct {
 //
 type Scope struct {
 	outer   *Scope
-	Objects []*Object // better contain name of it for convenient when resolving
+	Objects map[string]*Object
 }
 
-func (s *Scope) Insert(obj *Object) {
-	s.Objects = append(s.Objects, obj)
+func (s *Scope) Insert(obj *Object, name string) {
+	_, exist := s.Objects[name]
+	if exist {
+		panic("Already exist: " + name)
+	}
+	s.Objects[name] = obj
 }
+
+type ObjectType int
+
+const (
+	FUNC = iota
+	VAR
+)
 
 type Object struct {
-	// TODO Has Type
+	kind ObjectType
 	decl interface{}
 }

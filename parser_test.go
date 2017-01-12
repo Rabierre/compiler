@@ -168,3 +168,23 @@ func TestNext(t *testing.T) {
 		assert.Equal(t, exp, tok.Kind)
 	}
 }
+
+func TestResolve(t *testing.T) {
+	src := `
+		func1()
+	`
+	parser := initParser(src)
+	parser.parseExpr()
+	assert.Equal(t, 1, len(parser.UnResolved))
+
+	// TODO parse exprstmt need
+	src = `
+		func func1() {
+			func1()
+			func2()
+		}
+	`
+	parser = initParser(src)
+	parser.Parse()
+	assert.Equal(t, 0, len(parser.UnResolved))
+}
