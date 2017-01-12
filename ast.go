@@ -169,7 +169,7 @@ func (c *CommentList) Insert(comment *Comment) {
 }
 
 type Comment struct {
-	pos  int // TODO position of comment slash' in source code
+	pos  int
 	text string
 }
 

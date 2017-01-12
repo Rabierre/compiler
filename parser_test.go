@@ -174,7 +174,7 @@ func TestResolve(t *testing.T) {
 		func1()
 	`
 	parser := initParser(src)
-	parser.parseExpr()
+	parser.parseExpr(true)
 	assert.Equal(t, 1, len(parser.UnResolved))
 
 	// TODO parse exprstmt need
@@ -182,9 +182,12 @@ func TestResolve(t *testing.T) {
 		func func1() {
 			func1()
 			func2()
+			a = func1()
 		}
 	`
 	parser = initParser(src)
-	parser.Parse()
-	assert.Equal(t, 0, len(parser.UnResolved))
+	assert.Panics(t, func() {
+		parser.Parse()
+	})
+	assert.Equal(t, 2, len(parser.UnResolved))
 }
