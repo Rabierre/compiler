@@ -1,0 +1,34 @@
+func func1() {}
+
+// Comment 1
+func func2() {
+    // Comment 2
+}
+
+func func3() {
+    for(int i = 0; i < 10; i++) {
+        // Comment 3
+        increase(i)
+    }
+}
+
+func func4(int a, double b) int {
+    return a
+}
+
+func max(int a, double b) int {
+    if (a > b) {
+        return a
+    } else {
+        return b
+    }
+}
+
+func increase(int a) {
+    return a + 1
+}
+
+func func6() {
+    int a = increase(max(1, 2))
+    a = 10
+}

@@ -48,7 +48,7 @@ type ShortExpr struct {
 
 type Ident struct {
 	Pos  int
-	Name token.Token
+	Name string
 }
 
 type CallExpr struct {
@@ -58,14 +58,10 @@ type CallExpr struct {
 	RParenPos int
 }
 
-type Arg struct {
-	Pos  int
-	Type token.Token
-	Name Ident
-}
-
-type ArgList struct {
-	List []Arg
+type AssignExpr struct {
+	Pos    int
+	LValue Expr
+	RValue Expr
 }
 
 type BadExpr struct {
@@ -79,7 +75,7 @@ func (*BinaryExpr) exprNode() {}
 func (*UnaryExpr) exprNode()  {}
 func (*ShortExpr) exprNode()  {}
 func (*CallExpr) exprNode()   {}
-func (*Arg) exprNode()        {}
+func (*AssignExpr) exprNode() {}
 func (*BadExpr) exprNode()    {}
 
 //--------------------------------------------------------------------------------------
@@ -94,7 +90,7 @@ type FuncDecl struct {
 	// TODO Pos
 	Name   *Ident
 	Type   token.Token
-	Params *ArgList
+	Params *StmtList
 	Body   *CompoundStmt
 }
 
@@ -108,6 +104,10 @@ type Stmt interface {
 	// IfStmt, ForStmt, Expr, CompoundStmt, ReturnStmt
 	Node
 	stmtNode()
+}
+
+type StmtList struct {
+	List []Stmt
 }
 
 type CompoundStmt struct {
@@ -143,6 +143,10 @@ type ReturnStmt struct {
 	Value Expr
 }
 
+type ExprStmt struct {
+	expr Expr
+}
+
 type EmptyStmt struct {
 }
 
@@ -150,11 +154,13 @@ type BadStmt struct {
 	From int
 }
 
+func (*StmtList) stmtNode()     {}
 func (*CompoundStmt) stmtNode() {}
 func (*ForStmt) stmtNode()      {}
 func (*IfStmt) stmtNode()       {}
 func (*VarDeclStmt) stmtNode()  {}
 func (*ReturnStmt) stmtNode()   {}
+func (*ExprStmt) stmtNode()     {}
 func (*EmptyStmt) stmtNode()    {}
 func (*BadStmt) stmtNode()      {}
 
@@ -170,7 +176,7 @@ func (c *CommentList) Insert(comment *Comment) {
 }
 
 type Comment struct {
-	pos  int // TODO position of comment slash' in source code
+	pos  int
 	text string
 }
 

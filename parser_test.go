@@ -42,9 +42,9 @@ func TestParseFunction(t *testing.T) {
 
 	assert.NotNil(t, parser.topScope)
 	assert.Equal(t, 4, len(parser.decls))
-	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name.Val)
+	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name)
 	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
-	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name.Val)
+	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name)
 	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
 }
 
@@ -105,7 +105,7 @@ func TestParseVarDecl(t *testing.T) {
 	stmt := parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl := stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.Val)
+	assert.Equal(t, "a", varDecl.Name.Name)
 	assert.Equal(t, "10", varDecl.RValue.(*BasicLit).Value)
 
 	src = `int a = funcCall(b,c)`
@@ -113,8 +113,8 @@ func TestParseVarDecl(t *testing.T) {
 	stmt = parser.parseVarDecl()
 	assert.NotNil(t, stmt)
 	varDecl = stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name.Val)
-	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name.Val)
+	assert.Equal(t, "a", varDecl.Name.Name)
+	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name)
 }
 
 func TestParseReturnStmt(t *testing.T) {
@@ -130,15 +130,27 @@ func TestParseReturnStmt(t *testing.T) {
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*ReturnStmt).Value)
 	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
+
 	assert.Equal(t, 3, len(params))
-	Set := map[token.Type]token.Type{
-		token.IDENT:   params[0].(*Ident).Name.Kind,
-		token.INT_LIT: params[1].(*BasicLit).Type,
-		token.TRUE:    params[2].(*BasicLit).Type,
+	set := [][]string{
+		{"*main.Ident", reflect.TypeOf(params[0]).String()},
+		{"*main.BasicLit", reflect.TypeOf(params[1]).String()},
+		{"*main.BasicLit", reflect.TypeOf(params[2]).String()},
 	}
-	for e, r := range Set {
-		assert.Equal(t, e, r)
+	for _, s := range set {
+		assert.Equal(t, s[0], s[1])
 	}
+}
+
+func TestParseExprStmt(t *testing.T) {
+	src := `
+		a = 10
+	`
+	parser := initParser(src)
+	stmt := parser.parseExprStmt()
+	e := stmt.(*ExprStmt).expr.(*AssignExpr)
+	assert.Equal(t, "a", e.LValue.(*Ident).Name)
+	assert.Equal(t, "10", e.RValue.(*BasicLit).Value)
 }
 
 func TestNext(t *testing.T) {
@@ -163,7 +175,7 @@ func TestResolve(t *testing.T) {
 		func1()
 	`
 	parser := initParser(src)
-	parser.parseExpr()
+	parser.parseExpr(true)
 	assert.Equal(t, 1, len(parser.UnResolved))
 
 	// TODO parse exprstmt need
@@ -171,9 +183,12 @@ func TestResolve(t *testing.T) {
 		func func1() {
 			func1()
 			func2()
+			a = func1()
 		}
 	`
 	parser = initParser(src)
-	parser.Parse()
-	assert.Equal(t, 0, len(parser.UnResolved))
+	assert.Panics(t, func() {
+		parser.Parse()
+	})
+	assert.Equal(t, 2, len(parser.UnResolved))
 }

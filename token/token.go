@@ -46,7 +46,6 @@ const (
 	GEQ
 	EQ
 	NEQ
-
 	SPACE
 	VOID
 
