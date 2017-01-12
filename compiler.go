@@ -55,7 +55,7 @@ func emitIfStmt( /*Don't handle ast directly*/ stmt Stmt) {
 func emitForStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*ForStmt)
 	buf.WriteString("for (")
-	emitStmt(s.Init)
+	emitStmt(s.Init) // TODO emitShortVarDecl
 	buf.WriteRune(';')
 	emitExpr(s.Cond)
 	buf.WriteRune(';')
@@ -174,7 +174,8 @@ func emitType( /*Don't handle ast directly*/ typ token.Token) {
 func emitParams( /*Don't handle ast directly*/ params *StmtList) {
 	buf.WriteString("(")
 	for i, p := range params.List {
-		buf.WriteString(p.(*VarDeclStmt).Name.Name)
+		d := p.(*VarDeclStmt)
+		buf.WriteString(fmt.Sprintf("%s %s", d.Type.Kind.String(), d.Name.Name))
 		if i < len(params.List)-1 {
 			buf.WriteString(", ")
 		}
