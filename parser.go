@@ -18,7 +18,8 @@ type Parser struct {
 	// If we handle source codes in files
 	// This should go in file struct
 	//
-	decls []Decl
+	decls      []Decl
+	UnResolved []*Ident
 }
 
 func (p *Parser) Init(src []byte) {
@@ -49,17 +50,21 @@ func (p *Parser) Parse() {
 }
 
 func (p *Parser) parseDecl() {
-	tok, _ := p.next()
+	println("parseDecl")
+	tok, _ := p.peek()
 	switch tok.Kind {
 	// By spec for now, no global variable, no imports are available.
 	// Function is top scope
 	//
 	case token.FUNC:
 		p.parseFunc()
+	default:
 	}
 }
 
 func (p *Parser) parseFunc() Decl {
+	println("parseFunc")
+	p.next()
 	ident := p.parseIdent()
 
 	p.expect(token.LPAREN)
@@ -82,18 +87,18 @@ func (p *Parser) parseFunc() Decl {
 	// p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
 	obj := &Object{decl: funcDecl, kind: FUNC}
 	// all functions should have name
-	p.topScope.Insert(obj)
+	p.topScope.Insert(obj, ident.Name.Val)
 
 	return funcDecl
 }
 
-func (p *Parser) parseIdent() Ident {
+func (p *Parser) parseIdent() *Ident {
 	tok, pos := p.peek()
 	if tok.Kind == token.IDENT {
 		p.next()
 	}
 	// TODO else error
-	return Ident{Name: tok, Pos: pos}
+	return &Ident{Name: tok, Pos: pos}
 }
 
 func (p *Parser) parseParamList() *ArgList {
@@ -158,6 +163,7 @@ func (p *Parser) parseStmtList() []Stmt {
 }
 
 func (p *Parser) parseStmt() Stmt {
+	println("parseStmt")
 	tok, pos := p.peek()
 
 	switch tok.Kind {
@@ -199,9 +205,7 @@ func (p *Parser) parseVarDecl() Stmt {
 
 	// TODO generalize this
 	obj := &Object{decl: decl, kind: VAR}
-	p.scope.Insert(obj)
-
-	// TODO resolve in scope
+	p.scope.Insert(obj, ident.Name.Val)
 
 	return decl
 }
@@ -256,10 +260,6 @@ func (p *Parser) parseReturnStmt() Stmt {
 	return &ReturnStmt{Pos: pos, Value: expr}
 }
 
-func (p *Parser) parseExpr() Expr {
-	return p.parseBinaryExpr(token.LowestPriority + 1)
-}
-
 func (p *Parser) parseExprList() *ExprList {
 	var exprs []Expr
 	for {
@@ -275,8 +275,15 @@ func (p *Parser) parseExprList() *ExprList {
 	return &ExprList{List: exprs}
 }
 
+func (p *Parser) parseExpr() Expr {
+	println("parseExpr")
+	return p.parseBinaryExpr(token.LowestPriority + 1)
+}
+
 // Term
 func (p *Parser) parseBinaryExpr(prio int) Expr {
+	println("parseBinaryExpr")
+
 	x := p.parseUnaryExpr()
 	for {
 		tok, _ := p.peek()
@@ -296,6 +303,7 @@ func (p *Parser) parseBinaryExpr(prio int) Expr {
 
 // Factor
 func (p *Parser) parseUnaryExpr() Expr {
+	println("parseUnaryExpr")
 	// Factor ::= "(" Expr ")"
 	//         | AddSub Factor
 	//         | number
@@ -308,33 +316,41 @@ func (p *Parser) parseUnaryExpr() Expr {
 		return &UnaryExpr{Pos: pos, Op: op, RValue: x}
 	}
 
-	return p.parsePrimaryExpr()
+	return p.parsePrimaryExpr(true)
 }
 
 // Parse function call or variable reference
 // identifier "(" ExprList ? ")"
 // identifier
 //
-func (p *Parser) parsePrimaryExpr() Expr {
-	x := p.parseOperand()
+func (p *Parser) parsePrimaryExpr(lookup bool) Expr {
+	println("parsePrimaryExpr")
+	x := p.parseOperand(false)
+
 	tok, _ := p.peek()
 	switch tok.Kind {
 	case token.LPAREN:
-		lparen := p.expect(token.LPAREN)
-		params := p.parseExprList()
-		rparen := p.expect(token.RPAREN)
-		return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
+		if lookup {
+			p.resolve(x)
+		}
+
+		return p.parseCallExpr(x)
 	}
 	return x
 }
 
-func (p *Parser) parseOperand() Expr {
+func (p *Parser) parseOperand(lookup bool) Expr {
+	println("parseOperand")
+
 	tok, pos := p.peek()
 	switch tok.Kind {
 	case token.IDENT:
 		x := p.parseIdent()
-		// TODO Resolve identity in scope
-		return &x
+		if lookup {
+			p.resolve(x)
+		}
+
+		return x
 	case token.INT_LIT, token.DOUBLE_LIT, token.TRUE, token.FALSE:
 		p.next()
 		return &BasicLit{Pos: pos, Value: tok.Val, Type: tok.Kind}
@@ -342,6 +358,29 @@ func (p *Parser) parseOperand() Expr {
 
 	_, to := p.peek()
 	return &BadExpr{From: pos, To: to}
+}
+
+func (p *Parser) parseCallExpr(x Expr) Expr {
+	println("parseCallExpr")
+	lparen := p.expect(token.LPAREN)
+	list := []Expr{}
+	for tok, _ := p.peek(); tok.Kind != token.EOF && tok.Kind != token.RPAREN; tok, _ = p.peek() {
+		list = append(list, p.parseRHS())
+
+		if tok, _ := p.peek(); tok.Kind == token.COMMA {
+			p.next()
+		}
+	}
+	params := &ExprList{list}
+	rparen := p.expect(token.RPAREN)
+
+	return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
+}
+
+func (p *Parser) parseRHS() Expr {
+	println("parseRHS")
+
+	return p.parseExpr()
 }
 
 func (p *Parser) next() (token.Token, int) {
@@ -366,14 +405,6 @@ func (p *Parser) expect(expected token.Type) int {
 	return pos
 }
 
-func (p *Parser) OpenScope() {
-	p.scope = &Scope{p.scope, []*Object{}}
-}
-
-func (p *Parser) CloseScope() {
-	p.scope = p.scope.outer
-}
-
 func (p *Parser) parseComment() {
 	token, pos := p.scanner.nextLine()
 
@@ -386,4 +417,25 @@ func (p *Parser) parseComment() {
 			fmt.Println(cmt)
 		}
 	}
+}
+
+func (p *Parser) resolve(expr Expr) {
+	println("resolve")
+	id := expr.(*Ident)
+	if id == nil {
+		return
+	}
+
+	_, exist := p.scope.Objects[id.Name.Val]
+	if !exist {
+		p.UnResolved = append(p.UnResolved, id)
+	}
+}
+
+func (p *Parser) OpenScope() {
+	p.scope = &Scope{p.scope, map[string]*Object{}}
+}
+
+func (p *Parser) CloseScope() {
+	p.scope = p.scope.outer
 }
