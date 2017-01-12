@@ -58,17 +58,6 @@ type AssignExpr struct {
 	RValue Expr
 }
 
-// TODO vardecl?
-type Arg struct {
-	Pos  int
-	Type token.Token
-	Name Ident
-}
-
-type ArgList struct {
-	List []Arg
-}
-
 type BadExpr struct {
 	From int
 	To   int
@@ -80,7 +69,6 @@ func (*BinaryExpr) exprNode() {}
 func (*UnaryExpr) exprNode()  {}
 func (*CallExpr) exprNode()   {}
 func (*AssignExpr) exprNode() {}
-func (*Arg) exprNode()        {}
 func (*BadExpr) exprNode()    {}
 
 //--------------------------------------------------------------------------------------
@@ -95,7 +83,7 @@ type FuncDecl struct {
 	// TODO Pos
 	Name   *Ident
 	Type   token.Token
-	Params *ArgList
+	Params *StmtList
 	Body   *CompoundStmt
 }
 
@@ -109,6 +97,10 @@ type Stmt interface {
 	// IfStmt, ForStmt, Expr, CompoundStmt, ReturnStmt
 	Node
 	stmtNode()
+}
+
+type StmtList struct {
+	List []Stmt
 }
 
 type CompoundStmt struct {
@@ -155,6 +147,7 @@ type BadStmt struct {
 	From int
 }
 
+func (*StmtList) stmtNode()     {}
 func (*CompoundStmt) stmtNode() {}
 func (*ForStmt) stmtNode()      {}
 func (*IfStmt) stmtNode()       {}

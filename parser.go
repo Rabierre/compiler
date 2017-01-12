@@ -102,15 +102,17 @@ func (p *Parser) parseFunc() Decl {
 func (p *Parser) parseIdent() *Ident {
 	tok, pos := p.peek()
 	if tok.Kind == token.IDENT {
+		// TODO else error
 		p.next()
 	}
-	// TODO else error
+
 	return &Ident{Name: tok.Val, Pos: pos}
 }
 
-func (p *Parser) parseParamList() *ArgList {
-	list := []Arg{}
+func (p *Parser) parseParamList() *StmtList {
+	println("parseParamList")
 
+	list := []Stmt{}
 	for tok, _ := p.peek(); tok.Kind == token.INT || tok.Kind == token.DOUBLE; {
 		list = append(list, p.parseParam())
 
@@ -119,15 +121,17 @@ func (p *Parser) parseParamList() *ArgList {
 		}
 		p.next()
 	}
-	return &ArgList{List: list}
+
+	return &StmtList{List: list}
 }
 
-func (p *Parser) parseParam() Arg {
+func (p *Parser) parseParam() Stmt {
+	println("parseParam")
 	tok, pos := p.next()
-	arg := Arg{Pos: pos, Type: tok}
+	param := &VarDeclStmt{Pos: pos, Type: tok}
 	tok, pos = p.next()
-	arg.Name = Ident{Pos: pos, Name: tok.Val}
-	return arg
+	param.Name = &Ident{Pos: pos, Name: tok.Val}
+	return param
 }
 
 func (p *Parser) parseBody() *CompoundStmt {
@@ -234,9 +238,8 @@ func (p *Parser) parseExprStmt() Stmt {
 func (p *Parser) parseForStmt() Stmt {
 	_, pos := p.next()
 
-	// 1. get initial status
 	p.expect(token.LPAREN)
-	// init := &EmptyStmt{}
+
 	init := p.parseStmt()
 	p.expect(token.SEMI_COLON)
 	// 2. get condition

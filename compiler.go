@@ -171,10 +171,10 @@ func emitType( /*Don't handle ast directly*/ typ token.Token) {
 	buf.WriteString(typ.Kind.String())
 }
 
-func emitParams( /*Don't handle ast directly*/ params *ArgList) {
+func emitParams( /*Don't handle ast directly*/ params *StmtList) {
 	buf.WriteString("(")
-	for i := 0; i < len(params.List); i++ {
-		buf.WriteString(params.List[i].Name.Name)
+	for i, p := range params.List {
+		buf.WriteString(p.(*VarDeclStmt).Name.Name)
 		if i < len(params.List)-1 {
 			buf.WriteString(", ")
 		}
