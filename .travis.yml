@@ -1,0 +1,18 @@
+language: go
+go:
+  - 1.6
+  - 1.7
+  - tip
+
+before_install:
+- export OLD_BUILD_DIR=$TRAVIS_BUILD_DIR
+- export MV_TARGET_DIR=$HOME/gopath/src/github.com/rabierre/
+- export TRAVIS_BUILD_DIR=$MV_TARGET_DIR/compiler
+- mkdir -p "$TRAVIS_BUILD_DIR"
+- mv "$OLD_BUILD_DIR" "$MV_TARGET_DIR"
+- cd "$TRAVIS_BUILD_DIR"
+
+install:
+- go get -v -t github.com/rabierre/compiler
+
+script: go test ./...
