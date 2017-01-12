@@ -426,10 +426,14 @@ func (p *Parser) resolve(expr Expr) {
 		return
 	}
 
-	_, exist := p.scope.Objects[id.Name.Val]
-	if !exist {
-		p.UnResolved = append(p.UnResolved, id)
+	for s := p.scope; s != nil; s = s.outer {
+		_, exist := s.Objects[id.Name.Val]
+		if exist {
+			return
+		}
 	}
+
+	p.UnResolved = append(p.UnResolved, id)
 }
 
 func (p *Parser) OpenScope() {
