@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Rabierre/compiler.svg?branch=master)](https://travis-ci.org/Rabierre/compiler)
+
 BNF description for LL(>=1) grammars
 
 ```
