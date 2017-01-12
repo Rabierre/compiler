@@ -59,7 +59,11 @@ func (s *Scanner) next() (token.Token, int) {
 		for ch != "\n" && ch != "\t" && ch != " " && err != io.EOF {
 			if ch == token.Keywords[token.LPAREN] ||
 				ch == token.Keywords[token.RPAREN] ||
-				ch == token.Keywords[token.COMMA] {
+				ch == token.Keywords[token.COMMA] ||
+				ch == token.Keywords[token.PLUS] ||
+				ch == token.Keywords[token.MINUS] ||
+				ch == token.Keywords[token.DIVIDE] ||
+				ch == token.Keywords[token.MULTI] {
 				s.undoCh()
 				break
 			}

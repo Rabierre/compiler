@@ -393,6 +393,14 @@ func (p *Parser) parsePrimaryExpr(lookup bool) Expr {
 		}
 
 		return p.parseCallExpr(x)
+	case token.INC, token.DEC:
+		if lookup {
+			p.resolve(x)
+		}
+
+		op, pos := p.next()
+		// TODO shortExpr is similar with unaryExpr()
+		return &ShortExpr{Pos: pos, Op: op, RValue: x}
 	}
 	return x
 }

@@ -25,6 +25,8 @@ Expr ::= identifier "=" Expr
        | Term
        | Factor
 Term ::= Factor ( Op Term )?
+ShortTerm ::= Factor "++"
+            | Factor "--"
 Factor ::= "(" Expr ")"
          | AddSub Factor
          | identifier "(" ExprList ? ")"
