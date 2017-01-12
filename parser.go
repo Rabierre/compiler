@@ -47,6 +47,10 @@ func (p *Parser) Parse() {
 	}
 
 	p.CloseScope()
+
+	if len(p.UnResolved) != 0 {
+		panic("Unresolved ident exist")
+	}
 }
 
 func (p *Parser) parseDecl() {
