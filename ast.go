@@ -40,6 +40,12 @@ type UnaryExpr struct {
 	RValue Expr
 }
 
+type ShortExpr struct {
+	Pos    int
+	Op     token.Token
+	RValue Expr
+}
+
 type Ident struct {
 	Pos  int
 	Name token.Token
@@ -71,6 +77,7 @@ func (*BasicLit) exprNode()   {}
 func (*Ident) exprNode()      {}
 func (*BinaryExpr) exprNode() {}
 func (*UnaryExpr) exprNode()  {}
+func (*ShortExpr) exprNode()  {}
 func (*CallExpr) exprNode()   {}
 func (*Arg) exprNode()        {}
 func (*BadExpr) exprNode()    {}

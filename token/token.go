@@ -35,6 +35,8 @@ const (
 
 	PLUS
 	MINUS
+	INC
+	DEC
 	MULTI
 	DIVIDE
 	ASSIGN
@@ -174,6 +176,8 @@ var Keywords = [...]string{
 
 	PLUS:   "+",
 	MINUS:  "-",
+	INC:    "++",
+	DEC:    "--",
 	MULTI:  "*",
 	DIVIDE: "/",
 	ASSIGN: "=",

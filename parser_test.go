@@ -59,6 +59,7 @@ func TestparseForStmt(t *testing.T) {
 	assert.NotNil(t, stmt)
 	assert.NotNil(t, stmt.(*ForStmt).Cond)
 	assert.NotNil(t, stmt.(*ForStmt).Post)
+	assert.NotNil(t, stmt.(*ForStmt).Post.(*ShortExpr))
 }
 
 func TestParseIfStmt(t *testing.T) {

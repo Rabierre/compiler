@@ -53,7 +53,7 @@ func SuiteCase() []*Suite {
 					// Comment
 				}
 			}
-		`, []token.Type{token.FUNC, token.IDENT, token.LPAREN, token.RPAREN, token.LBRACE, token.FOR, token.LPAREN, token.INT, token.IDENT, token.ASSIGN, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.LESS, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.RPAREN, token.LBRACE, token.COMMENT, token.IDENT, token.RBRACE, token.RBRACE, token.EOF}},
+		`, []token.Type{token.FUNC, token.IDENT, token.LPAREN, token.RPAREN, token.LBRACE, token.FOR, token.LPAREN, token.INT, token.IDENT, token.ASSIGN, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.LESS, token.INT_LIT, token.SEMI_COLON, token.IDENT, token.INC, token.RPAREN, token.LBRACE, token.COMMENT, token.IDENT, token.RBRACE, token.RBRACE, token.EOF}},
 	}
 }
 
