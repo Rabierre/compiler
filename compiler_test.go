@@ -13,5 +13,7 @@ func TestCompile(t *testing.T) {
 	}
 
 	// TODO compare with output.txt
-	Compile(bs)
+	c := Compiler{}
+	// c.Init(input, output)
+	c.Compile(bs)
 }
