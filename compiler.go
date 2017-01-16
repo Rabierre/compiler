@@ -28,6 +28,20 @@ func (c *Compiler) Compile(src []byte) {
 	parser.Init(src)
 	parser.Parse()
 
+	for _, decl := range parser.decls {
+		fn := decl.(*FuncDecl)
+		c.emitType(fn.Type)
+		c.buf.WriteByte(' ')
+		c.buf.WriteString(fn.Name.Name)
+
+		c.emitParamTypes(fn.Params)
+		c.buf.WriteByte(';')
+		c.buf.WriteByte('\n')
+	}
+
+	ioutil.WriteFile(path.Join(c.output, "mid.h"), c.buf.Bytes(), 0777)
+	c.buf.Truncate(c.buf.Len())
+
 	// function is top scope
 	for _, decl := range parser.decls {
 		fn := decl.(*FuncDecl)
@@ -36,10 +50,11 @@ func (c *Compiler) Compile(src []byte) {
 		c.buf.WriteString(fn.Name.Name)
 
 		c.emitParams(fn.Params)
+		c.buf.WriteByte('\n')
 		c.emitBody(fn.Body)
 	}
 
-	ioutil.WriteFile(path.Join(c.output, "mid.a"), c.buf.Bytes(), 0777)
+	ioutil.WriteFile(path.Join(c.output, "mid.c"), c.buf.Bytes(), 0777)
 }
 
 func (c *Compiler) emitBody( /*Don't handle ast directly*/ stnt Stmt) {
@@ -179,8 +194,6 @@ func (c *Compiler) emitAssignExpr( /*Don't handle ast directly*/ expr Expr) {
 	c.emitExpr(e.LValue)
 	c.buf.WriteRune('=')
 	c.emitExpr(e.RValue)
-	c.buf.WriteRune(';')
-	c.buf.WriteRune('\n')
 }
 
 func (c *Compiler) emitShortExpr( /*Don't handle ast directly*/ expr Expr) {
@@ -213,6 +226,18 @@ func (c *Compiler) emitType( /*Don't handle ast directly*/ typ token.Token) {
 	c.buf.WriteString(typ.Kind.String())
 }
 
+func (c *Compiler) emitParamTypes( /*Don't handle ast directly*/ params *StmtList) {
+	c.buf.WriteString("(")
+	for i, p := range params.List {
+		d := p.(*VarDeclStmt)
+		c.buf.WriteString(d.Type.Kind.String())
+		if i < len(params.List)-1 {
+			c.buf.WriteString(", ")
+		}
+	}
+	c.buf.WriteString(")")
+}
+
 func (c *Compiler) emitParams( /*Don't handle ast directly*/ params *StmtList) {
 	c.buf.WriteString("(")
 	for i, p := range params.List {
@@ -222,7 +247,7 @@ func (c *Compiler) emitParams( /*Don't handle ast directly*/ params *StmtList) {
 			c.buf.WriteString(", ")
 		}
 	}
-	c.buf.WriteString(")\n")
+	c.buf.WriteString(")")
 }
 
 func (c *Compiler) write(s string) {
