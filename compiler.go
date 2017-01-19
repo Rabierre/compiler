@@ -14,6 +14,8 @@ type Compiler struct {
 
 	input  string
 	output string
+
+	tlevel int
 }
 
 func (c *Compiler) Init(input, output string) {
@@ -26,6 +28,20 @@ func (c *Compiler) Compile(src []byte) {
 	parser.Init(src)
 	parser.Parse()
 
+	for _, decl := range parser.decls {
+		fn := decl.(*FuncDecl)
+		c.emitType(fn.Type)
+		c.buf.WriteByte(' ')
+		c.buf.WriteString(fn.Name.Name)
+
+		c.emitParamTypes(fn.Params)
+		c.buf.WriteByte(';')
+		c.buf.WriteByte('\n')
+	}
+
+	ioutil.WriteFile(path.Join(c.output, "mid.h"), c.buf.Bytes(), 0777)
+	c.buf.Truncate(c.buf.Len())
+
 	// function is top scope
 	for _, decl := range parser.decls {
 		fn := decl.(*FuncDecl)
@@ -34,6 +50,7 @@ func (c *Compiler) Compile(src []byte) {
 		c.buf.WriteString(fn.Name.Name)
 
 		c.emitParams(fn.Params)
+		c.buf.WriteByte('\n')
 		c.emitBody(fn.Body)
 	}
 
@@ -42,48 +59,64 @@ func (c *Compiler) Compile(src []byte) {
 
 func (c *Compiler) emitBody( /*Don't handle ast directly*/ stnt Stmt) {
 	c.emitCompoundStmt(stnt)
+
 }
 
 func (c *Compiler) emitCompoundStmt( /*Don't handle ast directly*/ stmt Stmt) {
+	c.write("{\n")
+	c.tlevel++
 	cs := stmt.(*CompoundStmt)
-	c.buf.WriteString("{\n")
 	for _, s := range cs.List {
 		c.emitStmt(s)
 	}
-	c.buf.WriteString("}\n")
+	c.tlevel--
+	c.write("}\n")
 }
 
 func (c *Compiler) emitIfStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*IfStmt)
-	c.buf.WriteString("if (")
+	c.write("if (")
 	c.emitExpr(s.Cond)
 	c.buf.WriteString(")\n")
 	c.emitBody(s.Body)
-	c.buf.WriteString("else\n")
-	c.emitStmt(s.ElseBody)
+	c.write("else\n")
+	c.emitBody(s.ElseBody)
 }
 
 func (c *Compiler) emitForStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*ForStmt)
-	c.buf.WriteString("for (")
-	c.emitStmt(s.Init) // TODO emitShortVarDecl
+	c.write("for (")
+	c.emitShortDeclStmt(s.Init) // TODO emitShortVarDecl
 	c.buf.WriteRune(';')
 	c.emitExpr(s.Cond)
 	c.buf.WriteRune(';')
 	c.emitExpr(s.Post)
-	c.buf.WriteRune(')')
+	c.buf.WriteString(")\n")
 	c.emitBody(s.Body)
 }
 
 func (c *Compiler) emitReturnStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*ReturnStmt)
-	c.buf.WriteString("return ")
+	c.write("return ")
 	c.emitExpr(s.Value)
 	c.buf.WriteString(";\n")
 }
 
+// for for stmt
+func (c *Compiler) emitShortDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
+	s := stmt.(*VarDeclStmt)
+	c.buf.WriteString(s.Type.Val)
+	c.buf.WriteRune(' ')
+	c.buf.WriteString(s.Name.Name)
+	if s.RValue != nil {
+		c.buf.WriteRune('=')
+		c.emitExpr(s.RValue)
+	}
+}
+
 func (c *Compiler) emitVarDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*VarDeclStmt)
+	c.write("")
 	c.buf.WriteString(s.Type.Val)
 	c.buf.WriteRune(' ')
 	c.buf.WriteString(s.Name.Name)
@@ -96,7 +129,10 @@ func (c *Compiler) emitVarDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
 }
 
 func (c *Compiler) emitExprStmt( /*Don't handle ast directly*/ stmt Stmt) {
+	c.write("")
 	c.emitExpr(stmt.(*ExprStmt).expr)
+	c.buf.WriteByte(';')
+	c.buf.WriteByte('\n')
 }
 
 func (c *Compiler) emitStmt( /*Don't handle ast directly*/ stmt Stmt) {
@@ -141,7 +177,15 @@ func (c *Compiler) emitCallExpr( /*Don't handle ast directly*/ expr Expr) {
 	e := expr.(*CallExpr)
 	c.emitExpr(e.Name)
 	c.buf.WriteRune('(')
-	c.emitExprList(e.Params.List)
+
+	list := e.Params.List
+	for i := 0; i < len(list); i++ {
+		c.emitExpr(list[i])
+		if i < len(list)-1 {
+			c.buf.WriteString(", ")
+		}
+	}
+
 	c.buf.WriteRune(')')
 }
 
@@ -150,14 +194,12 @@ func (c *Compiler) emitAssignExpr( /*Don't handle ast directly*/ expr Expr) {
 	c.emitExpr(e.LValue)
 	c.buf.WriteRune('=')
 	c.emitExpr(e.RValue)
-	c.buf.WriteRune(';')
-	c.buf.WriteRune('\n')
 }
 
-func (c *Compiler) emitExprList(list []Expr) {
-	for _, e := range list {
-		c.emitExpr(e)
-	}
+func (c *Compiler) emitShortExpr( /*Don't handle ast directly*/ expr Expr) {
+	e := expr.(*ShortExpr)
+	c.emitExpr(e.RValue)
+	c.buf.WriteString(e.Op.Val)
 }
 
 // TODO maybe function chain
@@ -173,6 +215,8 @@ func (c *Compiler) emitExpr( /*Don't handle ast directly*/ expr Expr) {
 		c.emitCallExpr(expr)
 	case (*AssignExpr):
 		c.emitAssignExpr(expr)
+	case (*ShortExpr):
+		c.emitShortExpr(expr)
 	default:
 		fmt.Println("Type: ", typ)
 	}
@@ -180,6 +224,18 @@ func (c *Compiler) emitExpr( /*Don't handle ast directly*/ expr Expr) {
 
 func (c *Compiler) emitType( /*Don't handle ast directly*/ typ token.Token) {
 	c.buf.WriteString(typ.Kind.String())
+}
+
+func (c *Compiler) emitParamTypes( /*Don't handle ast directly*/ params *StmtList) {
+	c.buf.WriteString("(")
+	for i, p := range params.List {
+		d := p.(*VarDeclStmt)
+		c.buf.WriteString(d.Type.Kind.String())
+		if i < len(params.List)-1 {
+			c.buf.WriteString(", ")
+		}
+	}
+	c.buf.WriteString(")")
 }
 
 func (c *Compiler) emitParams( /*Don't handle ast directly*/ params *StmtList) {
@@ -191,5 +247,12 @@ func (c *Compiler) emitParams( /*Don't handle ast directly*/ params *StmtList) {
 			c.buf.WriteString(", ")
 		}
 	}
-	c.buf.WriteString(")\n")
+	c.buf.WriteString(")")
+}
+
+func (c *Compiler) write(s string) {
+	for i := 0; i < c.tlevel; i++ {
+		c.buf.WriteByte('\t')
+	}
+	c.buf.WriteString(s)
 }
