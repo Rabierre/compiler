@@ -137,8 +137,8 @@ const (
 	HighestPriority = 7
 )
 
-func (t Token) Priority() int {
-	switch t.Kind {
+func (t Type) Priority() int {
+	switch t {
 	// case LOR:
 	// 	return 1
 	// case LAND:

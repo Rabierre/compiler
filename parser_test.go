@@ -16,10 +16,10 @@ func initParser(src string) *Parser {
 
 func TestParseComment(t *testing.T) {
 	parser := initParser("// this is comment")
-	parser.Parse()
+	parser.parseComment()
 
 	assert.NotNil(t, parser.topScope)
-	assert.Equal(t, len(parser.comments.comments), 1)
+	assert.Equal(t, 1, len(parser.comments.comments))
 }
 
 func TestParseFunction(t *testing.T) {
@@ -36,12 +36,15 @@ func TestParseFunction(t *testing.T) {
 		func func4(int a, double b) int {
 			return a
 		}
+		func func5(int a, double b) int {
+			func4(a, b)
+		}
 	`
 	parser := initParser(src)
 	parser.Parse()
 
 	assert.NotNil(t, parser.topScope)
-	assert.Equal(t, 4, len(parser.decls))
+	assert.Equal(t, 5, len(parser.decls))
 	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name)
 	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
 	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name)
@@ -79,7 +82,7 @@ func TestParseIfStmt(t *testing.T) {
 
 	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
 	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: token.INT_LIT}, cond.LValue))
-	assert.True(t, DeepEqual(Operator{Val: token.Token{"==", token.EQ}}, cond.Op))
+	assert.True(t, DeepEqual(Operator{Type: token.EQ}, cond.Op))
 	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: token.INT_LIT}, cond.RValue))
 
 	src = `if (1 == 2) {
@@ -165,8 +168,8 @@ func TestNext(t *testing.T) {
 	parser := initParser(src)
 	expects := []token.Type{token.INT, token.IDENT, token.INT, token.IDENT}
 	for _, exp := range expects {
-		tok, _ := parser.next()
-		assert.Equal(t, exp, tok.Kind)
+		assert.Equal(t, exp, parser.tok)
+		parser.next()
 	}
 }
 

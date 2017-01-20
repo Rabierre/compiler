@@ -105,7 +105,7 @@ func (c *Compiler) emitReturnStmt( /*Don't handle ast directly*/ stmt Stmt) {
 // for for stmt
 func (c *Compiler) emitShortDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*VarDeclStmt)
-	c.buf.WriteString(s.Type.Val)
+	c.buf.WriteString(s.Type.String())
 	c.buf.WriteRune(' ')
 	c.buf.WriteString(s.Name.Name)
 	if s.RValue != nil {
@@ -117,7 +117,7 @@ func (c *Compiler) emitShortDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
 func (c *Compiler) emitVarDeclStmt( /*Don't handle ast directly*/ stmt Stmt) {
 	s := stmt.(*VarDeclStmt)
 	c.write("")
-	c.buf.WriteString(s.Type.Val)
+	c.buf.WriteString(s.Type.String())
 	c.buf.WriteRune(' ')
 	c.buf.WriteString(s.Name.Name)
 	if s.RValue != nil {
@@ -164,7 +164,7 @@ func (c *Compiler) emitLiteracy( /*Don't handle ast directly*/ expr Expr) {
 func (c *Compiler) emitBinaryExpr( /*Don't handle ast directly*/ expr Expr) {
 	e := expr.(*BinaryExpr)
 	c.emitExpr(e.LValue)
-	c.buf.WriteString(e.Op.Val.Kind.String())
+	c.buf.WriteString(e.Op.Type.String())
 	c.emitExpr(e.RValue)
 }
 
@@ -199,7 +199,7 @@ func (c *Compiler) emitAssignExpr( /*Don't handle ast directly*/ expr Expr) {
 func (c *Compiler) emitShortExpr( /*Don't handle ast directly*/ expr Expr) {
 	e := expr.(*ShortExpr)
 	c.emitExpr(e.RValue)
-	c.buf.WriteString(e.Op.Val.Kind.String())
+	c.buf.WriteString(e.Op.Type.String())
 }
 
 // TODO maybe function chain
@@ -222,15 +222,15 @@ func (c *Compiler) emitExpr( /*Don't handle ast directly*/ expr Expr) {
 	}
 }
 
-func (c *Compiler) emitType( /*Don't handle ast directly*/ typ token.Token) {
-	c.buf.WriteString(typ.Kind.String())
+func (c *Compiler) emitType( /*Don't handle ast directly*/ typ token.Type) {
+	c.buf.WriteString(typ.String())
 }
 
 func (c *Compiler) emitParamTypes( /*Don't handle ast directly*/ params *StmtList) {
 	c.buf.WriteString("(")
 	for i, p := range params.List {
 		d := p.(*VarDeclStmt)
-		c.buf.WriteString(d.Type.Kind.String())
+		c.buf.WriteString(d.Type.String())
 		if i < len(params.List)-1 {
 			c.buf.WriteString(", ")
 		}
@@ -242,7 +242,7 @@ func (c *Compiler) emitParams( /*Don't handle ast directly*/ params *StmtList) {
 	c.buf.WriteString("(")
 	for i, p := range params.List {
 		d := p.(*VarDeclStmt)
-		c.buf.WriteString(fmt.Sprintf("%s %s", d.Type.Kind.String(), d.Name.Name))
+		c.buf.WriteString(fmt.Sprintf("%s %s", d.Type.String(), d.Name.Name))
 		if i < len(params.List)-1 {
 			c.buf.WriteString(", ")
 		}

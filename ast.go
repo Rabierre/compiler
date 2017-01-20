@@ -9,7 +9,7 @@ type Node interface {
 
 type Operator struct {
 	Node
-	Val token.Token
+	Type token.Type
 }
 
 //--------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ type Decl interface {
 type FuncDecl struct {
 	// TODO Pos
 	Name   *Ident
-	Type   token.Token
+	Type   token.Type
 	Params *StmtList
 	Body   *CompoundStmt
 }
@@ -138,7 +138,7 @@ type ForStmt struct {
 
 type VarDeclStmt struct {
 	Pos    int
-	Type   token.Token
+	Type   token.Type
 	Name   *Ident
 	RValue Expr
 }
