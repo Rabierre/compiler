@@ -1,4 +1,4 @@
-package main
+package ast
 
 import (
 	"github.com/rabierre/compiler/token"
@@ -149,7 +149,7 @@ type ReturnStmt struct {
 }
 
 type ExprStmt struct {
-	expr Expr
+	Val Expr
 }
 
 type EmptyStmt struct {
@@ -173,23 +173,23 @@ func (*BadStmt) stmtNode()      {}
 // Comment
 //
 type CommentList struct {
-	comments []*Comment
+	List []*Comment
 }
 
 func (c *CommentList) Insert(comment *Comment) {
-	c.comments = append(c.comments, comment)
+	c.List = append(c.List, comment)
 }
 
 type Comment struct {
-	pos  int
-	text string
+	Pos  int
+	Text string
 }
 
 //--------------------------------------------------------------------------------------
 // Scope
 //
 type Scope struct {
-	outer   *Scope
+	Outer   *Scope
 	Objects map[string]*Object
 }
 
@@ -211,4 +211,8 @@ const (
 type Object struct {
 	kind ObjectType
 	decl interface{}
+}
+
+func NewObject(decl interface{}, kind ObjectType) *Object {
+	return &Object{decl: decl, kind: kind}
 }
