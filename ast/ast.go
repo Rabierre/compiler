@@ -9,7 +9,7 @@ type Node interface {
 
 type Operator struct {
 	Node
-	Type token.Type
+	Type token.Type // TODO opkind
 }
 
 //--------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ type ExprList struct {
 type BasicLit struct {
 	Pos   int
 	Value string
-	Type  token.Type
+	Type  token.Type // TODO litkind
 }
 
 // Term
@@ -93,8 +93,9 @@ type Decl interface {
 
 type FuncDecl struct {
 	// TODO Pos
-	Name   *Ident
-	Type   token.Type
+	Name *Ident
+	Type token.Type // TODO
+
 	Params *StmtList
 	Body   *CompoundStmt
 }
