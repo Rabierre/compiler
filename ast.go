@@ -7,6 +7,11 @@ import (
 type Node interface {
 }
 
+type Operator struct {
+	Node
+	Val token.Token
+}
+
 //--------------------------------------------------------------------------------------
 // Expression
 //
@@ -30,19 +35,19 @@ type BinaryExpr struct {
 	Pos    int
 	LValue Expr
 	RValue Expr
-	Op     token.Token
+	Op     Operator
 }
 
 // Factor
 type UnaryExpr struct {
 	Pos    int
-	Op     token.Token
 	RValue Expr
+	Op     Operator
 }
 
 type ShortExpr struct {
 	Pos    int
-	Op     token.Token
+	Op     Operator
 	RValue Expr
 }
 

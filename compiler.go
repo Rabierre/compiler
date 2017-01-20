@@ -162,10 +162,10 @@ func (c *Compiler) emitLiteracy( /*Don't handle ast directly*/ expr Expr) {
 }
 
 func (c *Compiler) emitBinaryExpr( /*Don't handle ast directly*/ expr Expr) {
-	bin := expr.(*BinaryExpr)
-	c.emitExpr(bin.LValue)
-	c.buf.WriteString(bin.Op.Val)
-	c.emitExpr(bin.RValue)
+	e := expr.(*BinaryExpr)
+	c.emitExpr(e.LValue)
+	c.buf.WriteString(e.Op.Val.Kind.String())
+	c.emitExpr(e.RValue)
 }
 
 func (c *Compiler) emitIdent( /*Don't handle ast directly*/ expr Expr) {
@@ -199,7 +199,7 @@ func (c *Compiler) emitAssignExpr( /*Don't handle ast directly*/ expr Expr) {
 func (c *Compiler) emitShortExpr( /*Don't handle ast directly*/ expr Expr) {
 	e := expr.(*ShortExpr)
 	c.emitExpr(e.RValue)
-	c.buf.WriteString(e.Op.Val)
+	c.buf.WriteString(e.Op.Val.Kind.String())
 }
 
 // TODO maybe function chain

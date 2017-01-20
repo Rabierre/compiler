@@ -351,26 +351,27 @@ func (p *Parser) parseBinaryExpr(prio int, lookup bool) Expr {
 		if tok.Priority() < prio {
 			return x
 		}
-		op, pos := p.next()
+		tok, pos := p.next()
 		// 2. parse y as binay expr
-		y := p.parseBinaryExpr(op.Priority()+1, lookup)
-
+		y := p.parseBinaryExpr(tok.Priority()+1, lookup)
+		op := Operator{Val: tok}
 		x = &BinaryExpr{Pos: pos, Op: op, LValue: x, RValue: y}
 	}
 }
 
-// Factor
+// Factor ::= "(" Expr ")"
+//         | AddSub Factor
+//         | number
+//         | string
 func (p *Parser) parseUnaryExpr(lookup bool) Expr {
 	println("parseUnaryExpr")
-	// Factor ::= "(" Expr ")"
-	//         | AddSub Factor
-	//         | number
-	//         | string
+
 	tok, _ := p.peek()
 	switch tok.Kind {
 	case token.PLUS, token.MINUS:
-		op, pos := p.next()
+		tok, pos := p.next()
 		x := p.parseUnaryExpr(lookup)
+		op := Operator{Val: tok}
 		return &UnaryExpr{Pos: pos, Op: op, RValue: x}
 	}
 
@@ -398,7 +399,8 @@ func (p *Parser) parsePrimaryExpr(lookup bool) Expr {
 			p.resolve(x)
 		}
 
-		op, pos := p.next()
+		tok, pos := p.next()
+		op := Operator{Val: tok}
 		// TODO shortExpr is similar with unaryExpr()
 		return &ShortExpr{Pos: pos, Op: op, RValue: x}
 	}

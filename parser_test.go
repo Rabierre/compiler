@@ -79,7 +79,7 @@ func TestParseIfStmt(t *testing.T) {
 
 	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
 	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: token.INT_LIT}, cond.LValue))
-	assert.True(t, DeepEqual(token.Token{"==", token.EQ}, cond.Op))
+	assert.True(t, DeepEqual(Operator{Val: token.Token{"==", token.EQ}}, cond.Op))
 	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: token.INT_LIT}, cond.RValue))
 
 	src = `if (1 == 2) {
