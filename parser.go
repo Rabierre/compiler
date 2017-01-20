@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/rabierre/compiler/ast"
 	"github.com/rabierre/compiler/token"
 )
 
@@ -13,24 +14,24 @@ type Parser struct {
 	tok token.Type
 	pos int
 
-	scope    *Scope
-	topScope *Scope
+	scope    *ast.Scope
+	topScope *ast.Scope
 	scanner  *Scanner
 
-	comments *CommentList
+	comments *ast.CommentList
 
 	// If we handle source codes in files
 	// This should go in file struct
 	//
-	decls      []Decl
-	UnResolved []*Ident
+	decls      []ast.Decl
+	UnResolved []*ast.Ident
 }
 
 func (p *Parser) Init(src []byte) {
 	p.scanner = &Scanner{}
 	p.scanner.Init()
 	p.scanner.src = src
-	p.comments = &CommentList{}
+	p.comments = &ast.CommentList{}
 	p.OpenScope() // Top scope
 	p.topScope = p.scope
 
@@ -56,7 +57,7 @@ func (p *Parser) Parse() {
 	p.CloseScope()
 
 	unResolved := p.UnResolved
-	p.UnResolved = []*Ident{}
+	p.UnResolved = []*ast.Ident{}
 	old := p.scope
 	p.scope = p.topScope
 	for _, id := range unResolved {
@@ -86,7 +87,7 @@ func (p *Parser) parseDecl() {
 	}
 }
 
-func (p *Parser) parseFunc() Decl {
+func (p *Parser) parseFunc() ast.Decl {
 	println("parseFunc")
 	p.next() // consune func token
 	ident := p.parseIdent()
@@ -106,42 +107,42 @@ func (p *Parser) parseFunc() Decl {
 
 	p.OpenScope()
 	for _, param := range params.List {
-		if decl := param.(*VarDeclStmt); decl != nil {
-			obj := &Object{decl: decl.Name}
+		if decl := param.(*ast.VarDeclStmt); decl != nil {
+			obj := ast.NewObject(decl, ast.VAR)
 			p.scope.Insert(obj, decl.Name.Name)
 		}
 	}
 
 	body := p.parseBody()
-	funcDecl := &FuncDecl{Name: ident, Body: body, Params: params, Type: _typ}
+	decl := &ast.FuncDecl{Name: ident, Body: body, Params: params, Type: _typ}
 
 	// TODO move this to specific function like parse function decl only
-	p.decls = append(p.decls, funcDecl)
+	p.decls = append(p.decls, decl)
 
 	// TODO generalize this
 	// p.declare(decl, nil, p.pkgScope, ast.Fun, ident)
-	obj := &Object{decl: funcDecl, kind: FUNC}
+	obj := ast.NewObject(decl, ast.FUNC)
 	p.topScope.Insert(obj, ident.Name)
 
-	return funcDecl
+	return decl
 }
 
-func (p *Parser) parseIdent() *Ident {
+func (p *Parser) parseIdent() *ast.Ident {
 	println("parseIdent")
 	if p.tok != token.IDENT {
 		panic("Expect IDENT, GOT: " + p.tok.String())
 	}
 
-	id := &Ident{Name: p.val, Pos: p.pos}
+	id := &ast.Ident{Name: p.val, Pos: p.pos}
 	p.next()
 
 	return id
 }
 
-func (p *Parser) parseParamList() *StmtList {
+func (p *Parser) parseParamList() *ast.StmtList {
 	println("parseParamList")
 
-	list := []Stmt{}
+	list := []ast.Stmt{}
 	for p.tok == token.INT || p.tok == token.DOUBLE {
 		list = append(list, p.parseParam())
 
@@ -153,19 +154,19 @@ func (p *Parser) parseParamList() *StmtList {
 		}
 	}
 
-	return &StmtList{List: list}
+	return &ast.StmtList{List: list}
 }
 
-func (p *Parser) parseParam() Stmt {
+func (p *Parser) parseParam() ast.Stmt {
 	println("parseParam")
-	param := &VarDeclStmt{Pos: p.pos, Type: p.tok}
+	param := &ast.VarDeclStmt{Pos: p.pos, Type: p.tok}
 	p.next() // consume type
-	param.Name = &Ident{Pos: p.pos, Name: p.val}
+	param.Name = &ast.Ident{Pos: p.pos, Name: p.val}
 	p.next() // consume variable
 	return param
 }
 
-func (p *Parser) parseBody() *CompoundStmt {
+func (p *Parser) parseBody() *ast.CompoundStmt {
 	println("parseBody")
 	lbrace := p.expect(token.LBRACE)
 	// p.OpenScope()
@@ -175,14 +176,14 @@ func (p *Parser) parseBody() *CompoundStmt {
 
 	rbrace := p.expect(token.RBRACE)
 
-	return &CompoundStmt{
+	return &ast.CompoundStmt{
 		LBracePos: lbrace,
 		RBracePos: rbrace,
 		List:      list,
 	}
 }
 
-func (p *Parser) parseCompoundStmt() *CompoundStmt {
+func (p *Parser) parseCompoundStmt() *ast.CompoundStmt {
 	println("parseCompoundStmt")
 	lbrace := p.expect(token.LBRACE)
 	p.OpenScope()
@@ -192,16 +193,16 @@ func (p *Parser) parseCompoundStmt() *CompoundStmt {
 	p.CloseScope()
 	rbrace := p.expect(token.RBRACE)
 
-	return &CompoundStmt{
+	return &ast.CompoundStmt{
 		LBracePos: lbrace,
 		RBracePos: rbrace,
 		List:      list,
 	}
 }
 
-func (p *Parser) parseStmtList() []Stmt {
+func (p *Parser) parseStmtList() []ast.Stmt {
 	println("parseStmtList")
-	list := []Stmt{}
+	list := []ast.Stmt{}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
 		list = append(list, p.parseStmt())
 		if p.tok == token.COMMA {
@@ -211,7 +212,7 @@ func (p *Parser) parseStmtList() []Stmt {
 	return list
 }
 
-func (p *Parser) parseStmt() Stmt {
+func (p *Parser) parseStmt() ast.Stmt {
 	println("parseStmt")
 
 	switch p.tok {
@@ -228,13 +229,13 @@ func (p *Parser) parseStmt() Stmt {
 	case token.LBRACE:
 		return p.parseCompoundStmt()
 	case token.RBRACE:
-		return &EmptyStmt{ /*position for semicolon if need*/ }
+		return &ast.EmptyStmt{ /*position for semicolon if need*/ }
 	default:
 		// unkown type but progress
 		p.next()
 	}
 
-	return &BadStmt{From: p.pos}
+	return &ast.BadStmt{From: p.pos}
 }
 
 // parse variable declaration
@@ -242,14 +243,14 @@ func (p *Parser) parseStmt() Stmt {
 // double b = 1.0
 // int c
 //
-func (p *Parser) parseVarDecl() Stmt {
+func (p *Parser) parseVarDecl() ast.Stmt {
 	println("parseVarDecl")
-	decl := &VarDeclStmt{Pos: p.pos, Type: p.tok}
+	decl := &ast.VarDeclStmt{Pos: p.pos, Type: p.tok}
 	p.next() // consume type
 
 	ident := p.parseIdent()
 
-	var value Expr
+	var value ast.Expr
 	if p.tok == token.ASSIGN {
 		p.next() //consume =
 		value = p.parseExpr(true)
@@ -259,7 +260,7 @@ func (p *Parser) parseVarDecl() Stmt {
 	decl.RValue = value
 
 	// TODO generalize this
-	obj := &Object{decl: decl, kind: VAR}
+	obj := ast.NewObject(decl, ast.VAR)
 	p.scope.Insert(obj, ident.Name)
 
 	return decl
@@ -269,18 +270,18 @@ func (p *Parser) parseVarDecl() Stmt {
 // a = 10
 // funcCall()
 //
-func (p *Parser) parseExprStmt() Stmt {
+func (p *Parser) parseExprStmt() ast.Stmt {
 	println("parseExprStmt")
 	x := p.parseExpr(true)
 	if p.tok == token.ASSIGN {
 		p.next() // consume =
 		y := p.parseExpr(true)
-		x = &AssignExpr{Pos: x.(*Ident).Pos, LValue: x, RValue: y}
+		x = &ast.AssignExpr{Pos: x.(*ast.Ident).Pos, LValue: x, RValue: y}
 	}
-	return &ExprStmt{expr: x}
+	return &ast.ExprStmt{Val: x}
 }
 
-func (p *Parser) parseForStmt() Stmt {
+func (p *Parser) parseForStmt() ast.Stmt {
 	println("parseForStmt")
 	pos := p.pos
 	p.next() //consume for
@@ -305,10 +306,10 @@ func (p *Parser) parseForStmt() Stmt {
 
 	body := p.parseBody()
 
-	return &ForStmt{Pos: pos, Cond: _cond, Init: _init, Post: _post, Body: body}
+	return &ast.ForStmt{Pos: pos, Cond: _cond, Init: _init, Post: _post, Body: body}
 }
 
-func (p *Parser) parseIfStmt() Stmt {
+func (p *Parser) parseIfStmt() ast.Stmt {
 	println("parseIfStmt")
 	pos := p.pos
 	p.next() // consume if
@@ -319,30 +320,30 @@ func (p *Parser) parseIfStmt() Stmt {
 
 	body := p.parseCompoundStmt()
 
-	var elseBody Stmt
+	var elseBody ast.Stmt
 	if p.tok == token.ELSE {
 		p.next() // consume else
 		elseBody = p.parseCompoundStmt()
 	}
-	return &IfStmt{Pos: pos, Cond: cond, Body: body, ElseBody: elseBody}
+	return &ast.IfStmt{Pos: pos, Cond: cond, Body: body, ElseBody: elseBody}
 }
 
-func (p *Parser) parseReturnStmt() Stmt {
+func (p *Parser) parseReturnStmt() ast.Stmt {
 	println("parseReturnStmt")
 	pos := p.pos
 	p.next() // consume return
 
-	var expr Expr
+	var expr ast.Expr
 	if p.tok != token.EOF && p.tok != token.RBRACE {
 		expr = p.parseExpr(true)
 	}
 
-	return &ReturnStmt{Pos: pos, Value: expr}
+	return &ast.ReturnStmt{Pos: pos, Value: expr}
 }
 
-func (p *Parser) parseExprList() *ExprList {
+func (p *Parser) parseExprList() *ast.ExprList {
 	println("parseExprList")
-	var exprs []Expr
+	var exprs []ast.Expr
 	for {
 		// 1. parse expr
 		exprs = append(exprs, p.parseExpr(true))
@@ -353,16 +354,16 @@ func (p *Parser) parseExprList() *ExprList {
 		}
 		p.next() // consume ,
 	}
-	return &ExprList{List: exprs}
+	return &ast.ExprList{List: exprs}
 }
 
-func (p *Parser) parseExpr(lookup bool) Expr {
+func (p *Parser) parseExpr(lookup bool) ast.Expr {
 	println("parseExpr")
 	return p.parseBinaryExpr(token.LowestPriority+1, lookup)
 }
 
 // Term
-func (p *Parser) parseBinaryExpr(prio int, lookup bool) Expr {
+func (p *Parser) parseBinaryExpr(prio int, lookup bool) ast.Expr {
 	println("parseBinaryExpr")
 
 	x := p.parseUnaryExpr(lookup)
@@ -372,11 +373,11 @@ func (p *Parser) parseBinaryExpr(prio int, lookup bool) Expr {
 			return x
 		}
 
-		op := Operator{Type: p.tok}
+		op := ast.Operator{Type: p.tok}
 		p.next() // consume operator
 
 		y := p.parseBinaryExpr(p.tok.Priority()+1, lookup)
-		x = &BinaryExpr{Pos: p.pos, Op: op, LValue: x, RValue: y}
+		x = &ast.BinaryExpr{Pos: p.pos, Op: op, LValue: x, RValue: y}
 	}
 }
 
@@ -384,18 +385,18 @@ func (p *Parser) parseBinaryExpr(prio int, lookup bool) Expr {
 //         | AddSub Factor
 //         | number
 //         | string
-func (p *Parser) parseUnaryExpr(lookup bool) Expr {
+func (p *Parser) parseUnaryExpr(lookup bool) ast.Expr {
 	println("parseUnaryExpr")
 
 	switch p.tok {
 	case token.PLUS, token.MINUS:
-		op := Operator{Type: p.tok}
+		op := ast.Operator{Type: p.tok}
 		p.next() // consume operator
 
 		x := p.parseUnaryExpr(lookup)
 
 		// TODO fix position: use operator's position
-		return &UnaryExpr{Pos: p.pos, Op: op, RValue: x}
+		return &ast.UnaryExpr{Pos: p.pos, Op: op, RValue: x}
 	}
 
 	return p.parsePrimaryExpr(lookup)
@@ -405,7 +406,7 @@ func (p *Parser) parseUnaryExpr(lookup bool) Expr {
 // identifier "(" ExprList ? ")"
 // identifier
 //
-func (p *Parser) parsePrimaryExpr(lookup bool) Expr {
+func (p *Parser) parsePrimaryExpr(lookup bool) ast.Expr {
 	println("parsePrimaryExpr")
 	x := p.parseOperand(lookup)
 
@@ -421,16 +422,16 @@ func (p *Parser) parsePrimaryExpr(lookup bool) Expr {
 			p.resolve(x)
 		}
 
-		op := Operator{Type: p.tok}
+		op := ast.Operator{Type: p.tok}
 		// TODO shortExpr is similar with unaryExpr()
-		x = &ShortExpr{Pos: p.pos, Op: op, RValue: x}
+		x = &ast.ShortExpr{Pos: p.pos, Op: op, RValue: x}
 		p.next()
 	}
 
 	return x
 }
 
-func (p *Parser) parseOperand(lookup bool) Expr {
+func (p *Parser) parseOperand(lookup bool) ast.Expr {
 	println("parseOperand")
 
 	switch p.tok {
@@ -441,20 +442,20 @@ func (p *Parser) parseOperand(lookup bool) Expr {
 		}
 		return x
 	case token.INT_LIT, token.DOUBLE_LIT, token.TRUE, token.FALSE:
-		lit := &BasicLit{Pos: p.pos, Value: p.val, Type: p.tok}
+		lit := &ast.BasicLit{Pos: p.pos, Value: p.val, Type: p.tok}
 		p.next()
 		return lit
 	default:
 		p.next()
 	}
 
-	return &BadExpr{From: p.pos, To: p.pos}
+	return &ast.BadExpr{From: p.pos, To: p.pos}
 }
 
-func (p *Parser) parseCallExpr(x Expr) Expr {
+func (p *Parser) parseCallExpr(x ast.Expr) ast.Expr {
 	println("parseCallExpr")
 	lparen := p.expect(token.LPAREN)
-	list := []Expr{}
+	list := []ast.Expr{}
 	for p.tok != token.EOF && p.tok != token.RPAREN {
 		list = append(list, p.parseRHS())
 
@@ -462,13 +463,13 @@ func (p *Parser) parseCallExpr(x Expr) Expr {
 			p.next() // consume ,
 		}
 	}
-	params := &ExprList{list}
+	params := &ast.ExprList{list}
 	rparen := p.expect(token.RPAREN)
 
-	return &CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
+	return &ast.CallExpr{Name: x, LParenPos: lparen, RParenPos: rparen, Params: params}
 }
 
-func (p *Parser) parseRHS() Expr {
+func (p *Parser) parseRHS() ast.Expr {
 	println("parseRHS")
 
 	return p.parseExpr(true)
@@ -496,25 +497,25 @@ func (p *Parser) expect(expected token.Type) int {
 func (p *Parser) parseComment() {
 	token, pos := p.scanner.nextLine()
 
-	comment := &Comment{pos, token.Val}
+	comment := &ast.Comment{pos, token.Val}
 	p.comments.Insert(comment)
 
 	if debug {
 		println("Trace: ")
-		for _, cmt := range p.comments.comments {
+		for _, cmt := range p.comments.List {
 			fmt.Println(cmt)
 		}
 	}
 }
 
-func (p *Parser) resolve(expr Expr) {
+func (p *Parser) resolve(expr ast.Expr) {
 	println("resolve")
-	id := expr.(*Ident)
+	id := expr.(*ast.Ident)
 	if id == nil {
 		return
 	}
 
-	for s := p.scope; s != nil; s = s.outer {
+	for s := p.scope; s != nil; s = s.Outer {
 		_, exist := s.Objects[id.Name]
 		if exist {
 			return
@@ -525,9 +526,9 @@ func (p *Parser) resolve(expr Expr) {
 }
 
 func (p *Parser) OpenScope() {
-	p.scope = &Scope{p.scope, map[string]*Object{}}
+	p.scope = &ast.Scope{p.scope, map[string]*ast.Object{}}
 }
 
 func (p *Parser) CloseScope() {
-	p.scope = p.scope.outer
+	p.scope = p.scope.Outer
 }

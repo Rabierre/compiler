@@ -2,8 +2,10 @@ package main
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/rabierre/compiler/ast"
 	"github.com/rabierre/compiler/token"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +21,7 @@ func TestParseComment(t *testing.T) {
 	parser.parseComment()
 
 	assert.NotNil(t, parser.topScope)
-	assert.Equal(t, 1, len(parser.comments.comments))
+	assert.Equal(t, 1, len(parser.comments.List))
 }
 
 func TestParseFunction(t *testing.T) {
@@ -45,10 +47,10 @@ func TestParseFunction(t *testing.T) {
 
 	assert.NotNil(t, parser.topScope)
 	assert.Equal(t, 5, len(parser.decls))
-	assert.Equal(t, "func1", parser.decls[0].(*FuncDecl).Name.Name)
-	assert.Equal(t, 0, len(parser.decls[0].(*FuncDecl).Body.List))
-	assert.Equal(t, "func2", parser.decls[1].(*FuncDecl).Name.Name)
-	assert.Equal(t, 0, len(parser.decls[1].(*FuncDecl).Body.List))
+	assert.Equal(t, "func1", parser.decls[0].(*ast.FuncDecl).Name.Name)
+	assert.Equal(t, 0, len(parser.decls[0].(*ast.FuncDecl).Body.List))
+	assert.Equal(t, "func2", parser.decls[1].(*ast.FuncDecl).Name.Name)
+	assert.Equal(t, 0, len(parser.decls[1].(*ast.FuncDecl).Body.List))
 }
 
 func TestparseForStmt(t *testing.T) {
@@ -58,11 +60,11 @@ func TestparseForStmt(t *testing.T) {
 		}
 	`
 	parser := initParser(src)
-	stmt := parser.parseForStmt()
+	stmt := parser.parseForStmt().(*ast.ForStmt)
 	assert.NotNil(t, stmt)
-	assert.NotNil(t, stmt.(*ForStmt).Cond)
-	assert.NotNil(t, stmt.(*ForStmt).Post)
-	assert.NotNil(t, stmt.(*ForStmt).Post.(*ShortExpr))
+	assert.NotNil(t, stmt.Cond)
+	assert.NotNil(t, stmt.Post)
+	assert.NotNil(t, stmt.Post.(*ast.ShortExpr))
 }
 
 func TestParseIfStmt(t *testing.T) {
@@ -75,15 +77,15 @@ func TestParseIfStmt(t *testing.T) {
 		}
 	`
 	parser := initParser(src)
-	stmt := parser.parseIfStmt()
+	stmt := parser.parseIfStmt().(*ast.IfStmt)
 	assert.NotNil(t, stmt)
-	assert.NotNil(t, stmt.(*IfStmt).Cond)
-	assert.NotNil(t, stmt.(*IfStmt).ElseBody)
+	assert.NotNil(t, stmt.Cond)
+	assert.NotNil(t, stmt.ElseBody)
 
-	cond := stmt.(*IfStmt).Cond.(*BinaryExpr)
-	assert.True(t, DeepEqual(&BasicLit{Pos: 4, Value: "1", Type: token.INT_LIT}, cond.LValue))
-	assert.True(t, DeepEqual(Operator{Type: token.EQ}, cond.Op))
-	assert.True(t, DeepEqual(&BasicLit{Pos: 9, Value: "2", Type: token.INT_LIT}, cond.RValue))
+	cond := stmt.Cond.(*ast.BinaryExpr)
+	assert.True(t, DeepEqual(&ast.BasicLit{Pos: 4, Value: "1", Type: token.INT_LIT}, cond.LValue))
+	assert.True(t, DeepEqual(ast.Operator{Type: token.EQ}, cond.Op))
+	assert.True(t, DeepEqual(&ast.BasicLit{Pos: 9, Value: "2", Type: token.INT_LIT}, cond.RValue))
 
 	src = `if (1 == 2) {
 			// Comment
@@ -92,10 +94,10 @@ func TestParseIfStmt(t *testing.T) {
 		}
 	`
 	parser = initParser(src)
-	stmt = parser.parseIfStmt()
+	stmt = parser.parseIfStmt().(*ast.IfStmt)
 	assert.NotNil(t, stmt)
-	assert.NotNil(t, stmt.(*IfStmt).Cond)
-	assert.Nil(t, stmt.(*IfStmt).ElseBody)
+	assert.NotNil(t, stmt.Cond)
+	assert.Nil(t, stmt.ElseBody)
 }
 
 func DeepEqual(a, b interface{}) bool {
@@ -105,43 +107,41 @@ func DeepEqual(a, b interface{}) bool {
 func TestParseVarDecl(t *testing.T) {
 	src := `int a = 10`
 	parser := initParser(src)
-	stmt := parser.parseVarDecl()
+	stmt := parser.parseVarDecl().(*ast.VarDeclStmt)
 	assert.NotNil(t, stmt)
-	varDecl := stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name)
-	assert.Equal(t, "10", varDecl.RValue.(*BasicLit).Value)
+	assert.Equal(t, "a", stmt.Name.Name)
+	assert.Equal(t, "10", stmt.RValue.(*ast.BasicLit).Value)
 
 	src = `int a = funcCall(b,c)`
 	parser = initParser(src)
-	stmt = parser.parseVarDecl()
+	stmt = parser.parseVarDecl().(*ast.VarDeclStmt)
 	assert.NotNil(t, stmt)
-	varDecl = stmt.(*VarDeclStmt)
-	assert.Equal(t, "a", varDecl.Name.Name)
-	assert.Equal(t, "funcCall", varDecl.RValue.(*CallExpr).Name.(*Ident).Name)
+	assert.Equal(t, "a", stmt.Name.Name)
+	assert.Equal(t, "funcCall", stmt.RValue.(*ast.CallExpr).Name.(*ast.Ident).Name)
 }
 
 func TestParseReturnStmt(t *testing.T) {
 	src := `return`
 	parser := initParser(src)
-	stmt := parser.parseReturnStmt()
+	stmt := parser.parseReturnStmt().(*ast.ReturnStmt)
 	assert.NotNil(t, stmt)
-	assert.Nil(t, stmt.(*ReturnStmt).Value)
+	assert.Nil(t, stmt.Value)
 
 	src = `return funcCall(a,1,true)`
 	parser = initParser(src)
-	stmt = parser.parseReturnStmt()
+	stmt = parser.parseReturnStmt().(*ast.ReturnStmt)
 	assert.NotNil(t, stmt)
-	assert.NotNil(t, stmt.(*ReturnStmt).Value)
-	params := stmt.(*ReturnStmt).Value.(*CallExpr).Params.List
+	assert.NotNil(t, stmt.Value)
+	params := stmt.Value.(*ast.CallExpr).Params.List
 
 	assert.Equal(t, 3, len(params))
 	set := [][]string{
-		{"*main.Ident", reflect.TypeOf(params[0]).String()},
-		{"*main.BasicLit", reflect.TypeOf(params[1]).String()},
-		{"*main.BasicLit", reflect.TypeOf(params[2]).String()},
+		{"Ident", reflect.TypeOf(params[0]).String()},
+		{"BasicLit", reflect.TypeOf(params[1]).String()},
+		{"BasicLit", reflect.TypeOf(params[2]).String()},
 	}
 	for _, s := range set {
-		assert.Equal(t, s[0], s[1])
+		assert.True(t, strings.Contains(s[1], s[0]))
 	}
 }
 
@@ -151,9 +151,9 @@ func TestParseExprStmt(t *testing.T) {
 	`
 	parser := initParser(src)
 	stmt := parser.parseExprStmt()
-	e := stmt.(*ExprStmt).expr.(*AssignExpr)
-	assert.Equal(t, "a", e.LValue.(*Ident).Name)
-	assert.Equal(t, "10", e.RValue.(*BasicLit).Value)
+	e := stmt.(*ast.ExprStmt).Val.(*ast.AssignExpr)
+	assert.Equal(t, "a", e.LValue.(*ast.Ident).Name)
+	assert.Equal(t, "10", e.RValue.(*ast.BasicLit).Value)
 }
 
 func TestNext(t *testing.T) {
