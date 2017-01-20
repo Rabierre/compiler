@@ -10,7 +10,6 @@ import (
 type Scanner struct {
 	src        []byte
 	srcIndex   int
-	tokens     []token.Token
 	tokenIndex int
 	fullScaned bool
 }

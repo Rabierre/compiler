@@ -7,6 +7,7 @@ import (
 )
 
 func TestKeywordType(t *testing.T) {
+	assert.Equal(t, FUNC, KeywordType("func"))
 	assert.Equal(t, LPAREN, KeywordType("("))
 	assert.Equal(t, INT, KeywordType("int"))
 	assert.Equal(t, IDENT, KeywordType("hello"))
@@ -14,6 +15,6 @@ func TestKeywordType(t *testing.T) {
 }
 
 func TestPriority(t *testing.T) {
-	assert.Equal(t, Token{Kind: PLUS}.Priority(), Token{Kind: MINUS}.Priority())
-	assert.True(t, (Token{Kind: MINUS}.Priority() < Token{Kind: MULTI}.Priority()))
+	assert.True(t, PLUS.Priority() == MINUS.Priority())
+	assert.True(t, MINUS.Priority() < MULTI.Priority())
 }

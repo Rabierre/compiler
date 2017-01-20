@@ -7,6 +7,11 @@ import (
 type Node interface {
 }
 
+type Operator struct {
+	Node
+	Type token.Type
+}
+
 //--------------------------------------------------------------------------------------
 // Expression
 //
@@ -30,19 +35,19 @@ type BinaryExpr struct {
 	Pos    int
 	LValue Expr
 	RValue Expr
-	Op     token.Token
+	Op     Operator
 }
 
 // Factor
 type UnaryExpr struct {
 	Pos    int
-	Op     token.Token
 	RValue Expr
+	Op     Operator
 }
 
 type ShortExpr struct {
 	Pos    int
-	Op     token.Token
+	Op     Operator
 	RValue Expr
 }
 
@@ -89,7 +94,7 @@ type Decl interface {
 type FuncDecl struct {
 	// TODO Pos
 	Name   *Ident
-	Type   token.Token
+	Type   token.Type
 	Params *StmtList
 	Body   *CompoundStmt
 }
@@ -133,7 +138,7 @@ type ForStmt struct {
 
 type VarDeclStmt struct {
 	Pos    int
-	Type   token.Token
+	Type   token.Type
 	Name   *Ident
 	RValue Expr
 }
