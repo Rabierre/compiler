@@ -92,6 +92,7 @@ func (p *Parser) parseDecl() {
 
 func (p *Parser) parseFunc() ast.Decl {
 	trace("parseFunc")
+
 	p.next() // consune func token
 	ident := p.parseIdent()
 
@@ -132,6 +133,7 @@ func (p *Parser) parseFunc() ast.Decl {
 
 func (p *Parser) parseIdent() *ast.Ident {
 	trace("parseIdent")
+
 	if p.tok != token.IDENT {
 		panic("Expect IDENT, GOT: " + p.tok.String())
 	}
@@ -162,6 +164,7 @@ func (p *Parser) parseParamList() *ast.StmtList {
 
 func (p *Parser) parseParam() ast.Stmt {
 	trace("parseParam")
+
 	param := &ast.VarDeclStmt{Pos: p.pos, Type: p.tok}
 	p.next() // consume type
 	param.Name = &ast.Ident{Pos: p.pos, Name: p.val}
@@ -171,8 +174,8 @@ func (p *Parser) parseParam() ast.Stmt {
 
 func (p *Parser) parseBody() *ast.CompoundStmt {
 	trace("parseBody")
+
 	lbrace := p.expect(token.LBRACE)
-	// p.OpenScope()
 
 	list := p.parseStmtList()
 	p.CloseScope()
@@ -188,6 +191,7 @@ func (p *Parser) parseBody() *ast.CompoundStmt {
 
 func (p *Parser) parseCompoundStmt() *ast.CompoundStmt {
 	trace("parseCompoundStmt")
+
 	lbrace := p.expect(token.LBRACE)
 	p.OpenScope()
 
@@ -205,6 +209,7 @@ func (p *Parser) parseCompoundStmt() *ast.CompoundStmt {
 
 func (p *Parser) parseStmtList() []ast.Stmt {
 	trace("parseStmtList")
+
 	list := []ast.Stmt{}
 	for p.tok != token.RBRACE && p.tok != token.EOF {
 		list = append(list, p.parseStmt())
@@ -248,6 +253,7 @@ func (p *Parser) parseStmt() ast.Stmt {
 //
 func (p *Parser) parseVarDecl() ast.Stmt {
 	trace("parseVarDecl")
+
 	decl := &ast.VarDeclStmt{Pos: p.pos, Type: p.tok}
 	p.next() // consume type
 
@@ -275,6 +281,7 @@ func (p *Parser) parseVarDecl() ast.Stmt {
 //
 func (p *Parser) parseExprStmt() ast.Stmt {
 	trace("parseExprStmt")
+
 	x := p.parseExpr(true)
 	if p.tok == token.ASSIGN {
 		p.next() // consume =
@@ -286,6 +293,7 @@ func (p *Parser) parseExprStmt() ast.Stmt {
 
 func (p *Parser) parseForStmt() ast.Stmt {
 	trace("parseForStmt")
+
 	pos := p.pos
 	p.next() //consume for
 
@@ -314,6 +322,7 @@ func (p *Parser) parseForStmt() ast.Stmt {
 
 func (p *Parser) parseIfStmt() ast.Stmt {
 	trace("parseIfStmt")
+
 	pos := p.pos
 	p.next() // consume if
 
@@ -333,6 +342,7 @@ func (p *Parser) parseIfStmt() ast.Stmt {
 
 func (p *Parser) parseReturnStmt() ast.Stmt {
 	trace("parseReturnStmt")
+
 	pos := p.pos
 	p.next() // consume return
 
@@ -346,6 +356,7 @@ func (p *Parser) parseReturnStmt() ast.Stmt {
 
 func (p *Parser) parseExprList() *ast.ExprList {
 	trace("parseExprList")
+
 	var exprs []ast.Expr
 	for {
 		// 1. parse expr
@@ -362,6 +373,7 @@ func (p *Parser) parseExprList() *ast.ExprList {
 
 func (p *Parser) parseExpr(lookup bool) ast.Expr {
 	trace("parseExpr")
+
 	return p.parseBinaryExpr(token.LowestPriority+1, lookup)
 }
 
@@ -411,6 +423,7 @@ func (p *Parser) parseUnaryExpr(lookup bool) ast.Expr {
 //
 func (p *Parser) parsePrimaryExpr(lookup bool) ast.Expr {
 	trace("parsePrimaryExpr")
+
 	x := p.parseOperand(lookup)
 
 	switch p.tok {
@@ -457,6 +470,7 @@ func (p *Parser) parseOperand(lookup bool) ast.Expr {
 
 func (p *Parser) parseCallExpr(x ast.Expr) ast.Expr {
 	trace("parseCallExpr")
+
 	lparen := p.expect(token.LPAREN)
 	list := []ast.Expr{}
 	for p.tok != token.EOF && p.tok != token.RPAREN {
@@ -498,21 +512,17 @@ func (p *Parser) expect(expected token.Type) int {
 }
 
 func (p *Parser) parseComment() {
+	trace("parseComment")
+
 	token, pos := p.scanner.nextLine()
 
 	comment := &ast.Comment{pos, token.Val}
 	p.comments.Insert(comment)
-
-	if debug {
-		println("Trace: ")
-		for _, cmt := range p.comments.List {
-			fmt.Println(cmt)
-		}
-	}
 }
 
 func (p *Parser) resolve(expr ast.Expr) {
 	trace("resolve")
+
 	id := expr.(*ast.Ident)
 	if id == nil {
 		return
